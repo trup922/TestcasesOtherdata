@@ -1,0 +1,43 @@
+Certainly! Below are some test cases you can consider for updating the bill statement notification consumer F5:
+
+**1. Test Case: Removal of Docker file**
+   - **Objective:** Ensure that the Docker file is successfully removed, and the application still builds and runs without Docker.
+   - **Steps:**
+     1. Remove the Docker file.
+     2. Build the application using the standard build process.
+     3. Verify that the build is successful.
+     4. Run the application and confirm that it runs without Docker.
+
+**2. Test Case: Update Pom file to add Maven BuildPack plugin**
+   - **Objective:** Confirm that the Pom file is updated to include the Maven BuildPack plugin and that it functions as expected.
+   - **Steps:**
+     1. Update the Pom file with the Maven BuildPack plugin.
+     2. Build the application using the updated Pom file.
+     3. Confirm that the build is successful.
+     4. Check if the Maven BuildPack plugin is applied correctly.
+     
+**3. Test Case: Update Jenkins file with new buildtag**
+   - **Objective:** Ensure that the Jenkins file is updated with the new buildtag and Jenkins pipeline executes without errors.
+   - **Steps:**
+     1. Update the Jenkins file with the new buildtag.
+     2. Trigger the Jenkins pipeline for the updated project.
+     3. Verify that the build is successful.
+     4. Confirm that the new buildtag is reflected in the build output.
+
+**4. Test Case: Upgrade Spring Boot version to 3.2.1**
+   - **Objective:** Validate that the Spring Boot version is successfully upgraded, and the application works as expected.
+   - **Steps:**
+     1. Update the Spring Boot version to 3.2.1 in the Pom file.
+     2. Build the application with the updated Spring Boot version.
+     3. Verify that the build is successful.
+     4. Run the application and confirm that it functions without issues.
+
+**5. Test Case: Upgrade JDK 8 to JDK 17**
+   - **Objective:** Ensure that the JDK is upgraded from version 8 to 17, and the application runs seamlessly.
+   - **Steps:**
+     1. Update the project to use JDK 17.
+     2. Build the application using JDK 17.
+     3. Verify that the build is successful.
+     4. Run the application and confirm that it operates without any problems.
+
+These test cases cover the key aspects of the changes you described, helping to ensure a smooth transition and functionality of the updated bill statement notification consumer F5.
