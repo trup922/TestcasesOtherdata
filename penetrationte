@@ -1,0 +1,71 @@
+Certainly! Below are some test cases for penetration testing focused on the Broken Access Control issue with CWE-799:
+
+### Test Case 1: CAPTCHA Effectiveness
+**Objective:** Verify if the implemented CAPTCHA effectively differentiates between human and automated programs.
+
+1. **Test Steps:**
+   - Navigate to the login page.
+   - Attempt to submit the login form without completing the CAPTCHA.
+   - Verify that the system rejects the submission and displays an error message.
+
+2. **Expected Result:** The system should prevent login attempts without correctly solving the CAPTCHA.
+
+### Test Case 2: Time Interval between Actions
+**Objective:** Ensure that a minimum time interval is enforced between two actions from a specific user.
+
+1. **Test Steps:**
+   - Perform a legitimate action (e.g., login) on the application.
+   - Immediately attempt to perform the same action again.
+   - Verify that the system prevents the action and enforces a time interval.
+
+2. **Expected Result:** The system should disallow rapid consecutive actions and enforce the specified time interval.
+
+### Test Case 3: Server-Side Check for Duplicate Data
+**Objective:** Confirm that the server-side check restricts the submission of duplicate data.
+
+1. **Test Steps:**
+   - Submit data (e.g., a form) to the application.
+   - Attempt to submit the same data again.
+   - Verify that the system recognizes the duplicate data and rejects the submission.
+
+2. **Expected Result:** The system should identify and prevent the submission of duplicate data.
+
+### Test Case 4: Browser's Back Button Disablement
+**Objective:** Check if the browser's back button is disabled on pages where data can be submitted.
+
+1. **Test Steps:**
+   - Submit data to the application.
+   - Use the browser's back button to navigate to the previous page.
+   - Verify that the system prevents navigating back to the data submission page.
+
+2. **Expected Result:** The system should disable the browser's back button on pages where data can be submitted.
+
+### Test Case 5: Account Lockout after Invalid Authentication Attempts
+**Objective:** Verify if user accounts are locked out after a set number of invalid authentication attempts.
+
+1. **Test Steps:**
+   - Attempt to authenticate with invalid credentials multiple times (exceeding the allowed limit).
+   - Verify that the system locks the user account after reaching the invalid attempts threshold.
+
+2. **Expected Result:** The system should lock the user account after the specified number of invalid authentication attempts.
+
+### Test Case 6: Information Disclosure Prevention
+**Objective:** Ensure that the system does not reveal sensitive information about users or passwords upon failed authentication attempts.
+
+1. **Test Steps:**
+   - Attempt to log in with incorrect credentials.
+   - Verify that the system provides a generic error message without revealing user-specific details.
+
+2. **Expected Result:** The system should not disclose information about the existence of users or the validity of passwords upon authentication failure.
+
+### Test Case 7: Configurable Request Rate Limits
+**Objective:** Confirm that configurable per-user/session request rate limits are effective.
+
+1. **Test Steps:**
+   - Perform a series of actions within the specified rate limits for a user/session.
+   - Attempt to exceed the configured limits.
+   - Verify that the system enforces the rate limits and blocks further actions.
+
+2. **Expected Result:** The system should enforce the configured per-user/session request rate limits.
+
+These test cases cover various aspects of preventing automated attacks related to Broken Access Control and improper control of interaction frequency. Adjustments may be needed based on the specific implementation details of the application.
