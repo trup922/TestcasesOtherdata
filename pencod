@@ -37,3 +37,44 @@ When writing test cases for the API change where the `userid` is now passed thro
    - Ensure that the API documentation is updated to reflect the changes in the request format, highlighting the new approach of passing `userid` through the request body.
 
 By covering these test cases, you can ensure thorough testing of the API change and validate its functionality, performance, security, and compatibility aspects.
+
+
+Sure, here are some sample datasets you can use to test the changes in passing `userid` through the request body:
+
+1. **Valid User IDs:**
+   - "A12312"
+   - "B56789"
+   - "C98765"
+   - "D24680"
+   - "E13579"
+
+2. **Invalid User IDs:**
+   - Empty string: ""
+   - Null value: null
+   - Incorrect data type: 12345 (integer instead of string)
+   - Special characters: "@#$%"
+   - User ID exceeding maximum length: "ABCDEFGHIJKLM1234567890" (if there's a maximum character limit)
+
+3. **Edge Cases:**
+   - User ID with special characters: "user@example.com"
+   - User ID with leading or trailing spaces: "  A12312  "
+   - User ID containing Unicode characters: "Üser123"
+   - User ID with mixed case: "aBcDeF123"
+
+4. **Combinations:**
+   - Test various combinations of `archivedflag`, `countrycode`, and `merchantid` along with the `userid` to simulate different scenarios.
+
+5. **Large Datasets:**
+   - Test with a large number of user IDs to assess performance and scalability. You can generate these programmatically or use existing datasets if available.
+
+6. **Boundary Cases:**
+   - Test with the minimum and maximum lengths allowed for the `userid` field.
+   - Test with the minimum and maximum values for any numeric user IDs if applicable.
+
+7. **Negative Scenarios:**
+   - Test with non-existent user IDs to verify error handling (e.g., "XYZ123", "USER_NOT_FOUND").
+
+8. **Special Cases:**
+   - Test with user IDs that have been previously archived or deleted to ensure the API handles them appropriately.
+
+Ensure that you cover a variety of scenarios using these datasets to thoroughly test the API's handling of `userid` changes. Additionally, consider the specific requirements and constraints of your application when selecting or generating test data.
