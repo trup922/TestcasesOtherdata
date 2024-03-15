@@ -1,0 +1,39 @@
+When writing test cases for the API change where the `userid` is now passed through the request body instead of the URL, you'll want to ensure you cover various scenarios to validate the functionality. Here's a set of test cases you could consider:
+
+1. **Positive Test Cases:**
+   - Verify that the API returns the expected response when the `userid` is passed in the request body.
+   - Ensure that the API successfully processes the request and returns the correct summary for the specified user.
+   - Check if the API returns the expected response code (e.g., 200 OK).
+   - Validate that the response contains the relevant merchant summary information.
+
+2. **Negative Test Cases:**
+   - Test with missing `userid` in the request body and ensure the API returns an appropriate error response.
+   - Test with invalid `userid` format (e.g., empty string, incorrect data type) and verify the API handles it gracefully.
+   - Check if the API handles the case where the `merchantdatalist` is missing or empty.
+   - Verify that the API returns an error response when mandatory fields in the request body are missing.
+   - Test with an invalid or expired `userid` and ensure the API returns an error indicating the user is not found or unauthorized.
+
+3. **Boundary Test Cases:**
+   - Test with the maximum length of `userid` to ensure the API handles it correctly.
+   - Test with different combinations of parameters (e.g., various values for `archivedflag`, `countrycode`, `merchantid`) to validate the API's robustness.
+   - Check if the API handles edge cases such as special characters or unexpected inputs in the `userid` field.
+
+4. **Regression Test Cases:**
+   - Validate that the API continues to work as expected for other endpoints and functionalities.
+   - Ensure that existing functionalities unrelated to the `userid` change remain unaffected.
+
+5. **Performance Test Cases:**
+   - Assess the performance impact of passing `userid` through the request body instead of the URL.
+   - Test with a large number of concurrent requests to determine if there are any performance bottlenecks introduced by the change.
+
+6. **Security Test Cases:**
+   - Verify that the API properly sanitizes and validates the `userid` field to prevent any security vulnerabilities such as SQL injection or cross-site scripting (XSS).
+   - Ensure that sensitive user information is not leaked in error responses.
+
+7. **Integration Test Cases:**
+   - Test the API in conjunction with other systems or components that rely on the `userid` to ensure interoperability and compatibility.
+
+8. **Documentation Test Cases:**
+   - Ensure that the API documentation is updated to reflect the changes in the request format, highlighting the new approach of passing `userid` through the request body.
+
+By covering these test cases, you can ensure thorough testing of the API change and validate its functionality, performance, security, and compatibility aspects.
