@@ -1,1 +1,19 @@
 
+Lock Release Confirmation:
+
+After User X is requested to release the lock, there should be a step to confirm whether the lock has been released or not before proceeding further.
+Error Handling:
+
+It's essential to include steps for error handling in case any step fails during the process, such as if the system encounters an unexpected error while transitioning between modes or updating the template.
+User Permissions:
+
+Ensure that the user performing these actions has the necessary permissions to access and modify templates, raise approval requests, etc.
+Approval Workflow:
+
+Consider adding more details about the approval workflow, such as what happens if the approver rejects the update request or if multiple levels of approval are required.
+User Feedback:
+
+Include steps to provide feedback to the user after each action, such as success messages, error messages, or notifications about the status of their requests.
+Logging and Auditing:
+
+Consider including steps to log actions taken by users and any system responses for auditing purposes.
