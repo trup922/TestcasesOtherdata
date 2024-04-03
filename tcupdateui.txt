@@ -54,4 +54,47 @@ Sure, let's detail the steps for each scenario:
 11. **Redirect to Manage Email Template Screen:**
     - Once the update and approval process is completed, verify that the user is redirected back to the 'Manage Email Templates' screen.
 
-By following these detailed steps for each scenario, testers can accurately verify the functionality of the admin portal's email template management flow.
+Certainly! Here are the detailed steps for Flow 2: My Submitted Requests.
+
+### Flow 2: My Submitted Requests
+
+1. **Login to Admin Portal:**
+    - Open the web browser and navigate to the admin portal URL.
+    - Enter valid credentials (username and password) in the respective fields.
+    - Click on the 'Login' button.
+    - Verify that the user is successfully logged in and redirected to the admin dashboard.
+
+2. **Navigate to My Submitted Requests:**
+    - Locate the option/menu for 'My Submitted Requests' on the dashboard.
+    - Click on 'My Submitted Requests'.
+    - Verify that the user is directed to the page displaying the status of their submitted requests.
+
+3. **View Status of Submitted Requests:**
+    - Check if the status of all submitted requests is displayed.
+    - Verify that the production effective date of approved templates is also shown.
+
+4. **Filter Rejected Requests:**
+    - Locate the option to filter requests by status.
+    - Click on 'Rejected' to filter out only the rejected requests.
+    - Verify that only rejected requests are displayed.
+
+5. **View Rejected Requests:**
+    - Click on a rejected request from the list.
+    - Verify that the details of the rejected request are displayed.
+
+6. **View Rejected Comments:**
+    - Check if the comments associated with the rejection are displayed for the selected request.
+    - Verify that the rejected comments are clearly visible and associated with the specific request.
+
+7. **Transition to Update Mode for Rejected Requests:**
+    - Locate the option to transition to update mode for the rejected request.
+    - Click on 'Go to update mode' for the rejected request.
+    - Verify that the user is directed to the update mode for the selected rejected request.
+
+8. **Re-update Approved Requests:**
+    - If the user wants to re-update a previously approved request:
+        - Locate the approved request from the list.
+        - Click on 'Go to update mode' for the approved request.
+        - Verify that the user is directed to the update mode for the selected approved request.
+
+By following these detailed steps, testers can accurately verify the functionality of the 'My Submitted Requests' feature, ensuring that users can effectively view and manage their submitted requests, especially focusing on rejected requests and their handling.
