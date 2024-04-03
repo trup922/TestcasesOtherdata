@@ -1,0 +1,57 @@
+Sure, let's detail the steps for each scenario:
+
+1. **Login to Admin Portal:**
+   - Open the web browser and navigate to the admin portal URL.
+   - Enter valid credentials (username and password) in the respective fields.
+   - Click on the 'Login' button.
+   - Verify that the user is successfully logged in and redirected to the admin dashboard.
+
+2. **Navigation to Manage Email Templates:**
+   - Locate the action menu on the dashboard.
+   - Click on the 'Action' menu to reveal the dropdown options.
+   - Verify that 'Manage Email Templates' is one of the options listed.
+   - Click on 'Manage Email Templates'.
+
+3. **Select UK Templates:**
+   - Once in the 'Manage Email Templates' section, locate the dropdown or list of available regions/templates.
+   - Select 'UK Templates' from the dropdown or list.
+   - Verify that UK templates are displayed on the screen.
+
+4. **Select Chargeback Template:**
+   - Among the UK templates displayed, locate the 'Chargeback' template.
+   - Click on the 'Chargeback' template.
+   - Verify that the Chargeback template is selected and displayed on the screen.
+
+5. **View Mode:**
+   - Locate the option to switch between view and update modes.
+   - Click on 'View' mode.
+   - Verify that the template is displayed in read-only mode.
+
+6. **Update Mode Transition:**
+   - While in 'View' mode, locate the option to switch to update mode.
+   - Click on 'Go to update mode'.
+   - Verify that the template switches from view mode to update mode.
+
+7. **Template Copy Lock:**
+   a. **Locked Template:**
+      - If the template copy is locked, verify that a message or prompt appears indicating the lock status.
+      - Verify that an email is sent to User X requesting them to release the lock.
+   b. **Unlocked Template:**
+      - If the template copy is not locked, proceed to the next step without any prompt or email.
+
+8. **Check if Template is Production Copy:**
+   - Verify if the selected template copy is marked as the production copy.
+
+9. **Update Production Copy:**
+   - If the template copy is marked as the production copy, make necessary updates to the template.
+   - Save the changes made to the production copy.
+   - Verify that the updates are successfully applied.
+
+10. **Raise Approval Request:**
+    - After updating the production copy, verify that an approval request is automatically raised.
+    - Verify that an email notification is sent to the designated approver regarding the update request.
+
+11. **Redirect to Manage Email Template Screen:**
+    - Once the update and approval process is completed, verify that the user is redirected back to the 'Manage Email Templates' screen.
+
+By following these detailed steps for each scenario, testers can accurately verify the functionality of the admin portal's email template management flow.
