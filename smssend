@@ -1,0 +1,63 @@
+Sure, here are some test cases for the feature:
+
+1. **Verify Database Insertion**:
+   - Input: Sample SMS data with all required fields
+   - Action: Attempt to insert the data into the database
+   - Expected Output: Data should be successfully inserted into the database without any errors.
+
+2. **Verify Mandatory Fields**:
+   - Input: Sample SMS data missing one or more mandatory fields (e.g., user_id, notification_type, country_code, etc.)
+   - Action: Attempt to insert the incomplete data into the database
+   - Expected Output: System should reject the insertion and provide an appropriate error message indicating the missing field(s).
+
+3. **Verify Message Body Logging**:
+   - Input: Sample SMS data with a message body
+   - Action: Insert the data into the database
+   - Expected Output: The message body should be successfully logged into the "Message_body" field of the database.
+
+4. **Verify Message Body Retrieval**:
+   - Input: Previously inserted SMS data
+   - Action: Retrieve the data from the database
+   - Expected Output: The retrieved data should include the message body stored in the "Message_body" field.
+
+5. **Verify Data Integrity**:
+   - Input: Inserted SMS data
+   - Action: Retrieve and compare the inserted data from the database with the original input data
+   - Expected Output: All fields in the retrieved data should match the original input data, ensuring data integrity.
+
+6. **Verify Unique Message ID**:
+   - Input: Two SMS data entries with the same message ID
+   - Action: Attempt to insert both entries into the database
+   - Expected Output: System should reject the insertion of the second entry with a duplicate message ID and provide an appropriate error message.
+
+7. **Verify Message Status Logging**:
+   - Input: Sample SMS data with a status (e.g., delivered, pending, failed)
+   - Action: Insert the data into the database
+   - Expected Output: The status should be successfully logged into the "status" field of the database.
+
+8. **Verify Processing Status Logging**:
+   - Input: Sample SMS data with a processing status (e.g., processed, pending)
+   - Action: Insert the data into the database
+   - Expected Output: The processing status should be successfully logged into the "processed_status" field of the database.
+
+9. **Verify Message Timestamp Logging**:
+   - Input: Sample SMS data with a timestamp
+   - Action: Insert the data into the database
+   - Expected Output: The timestamp should be successfully logged into the "message_timestamp" field of the database.
+
+10. **Verify Querying by User ID**:
+    - Input: Sample SMS data with a specific user ID
+    - Action: Query the database for SMS entries associated with that user ID
+    - Expected Output: The query should return all SMS entries matching the specified user ID.
+
+11. **Verify Querying by Notification Type**:
+    - Input: Sample SMS data with a specific notification type
+    - Action: Query the database for SMS entries associated with that notification type
+    - Expected Output: The query should return all SMS entries matching the specified notification type.
+
+12. **Verify Querying by Date Range**:
+    - Input: Sample SMS data with a specific date range
+    - Action: Query the database for SMS entries within that date range
+    - Expected Output: The query should return all SMS entries falling within the specified date range.
+
+These test cases cover various aspects of the feature, ensuring that SMS data is properly logged into the database and can be retrieved accurately when needed.
