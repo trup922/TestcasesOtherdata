@@ -1,0 +1,35 @@
+Sure, here are some test cases for the scenario you described:
+
+1. **Verify Initial Functionality**: 
+   - Input: Existing email consumer process without the new notification event types.
+   - Expected Output: Confirmation that the email consumer process operates correctly without the new event types.
+
+2. **Update Secret File with New Event Types**:
+   - Input: Update the secret file with the new notification event types (boarding, settlement).
+   - Expected Output: Successful update of the secret file with the new event types.
+
+3. **Trigger Email Consumer Process**:
+   - Input: After updating the secret file, trigger the email consumer process.
+   - Expected Output: Confirmation that the email consumer process successfully identifies and processes the new event types without any code changes.
+
+4. **Validate Handling of New Event Types**:
+   - Input: Send notifications for the new event types (boarding, settlement) and verify email processing.
+   - Expected Output: Email notifications are generated and sent for the new event types without any issues.
+
+5. **Ensure No Impact on Existing Event Types**:
+   - Input: Send notifications for existing event types and verify email processing.
+   - Expected Output: Confirmation that existing event types are still processed correctly and that there are no unintended side effects from the addition of new event types.
+
+6. **Verify Flexibility for Future Changes**:
+   - Input: Update the secret file with additional new event types as per business requirements.
+   - Expected Output: Successful processing of the newly added event types without requiring any code changes in the email consumer process.
+
+7. **Test Error Handling**:
+   - Input: Introduce errors in the secret file or incorrect formatting of new event types.
+   - Expected Output: Proper error handling by the email consumer process, such as logging errors and failing gracefully without impacting the overall functionality.
+
+8. **Regression Testing**:
+   - Input: After any changes to the email consumer process or the secret file, perform regression testing.
+   - Expected Output: Confirmation that all existing functionalities are still intact and that the new changes haven't introduced any regressions.
+
+These test cases cover various aspects of the requirement, ensuring that the email consumer process can handle new event types efficiently without requiring frequent code updates.
