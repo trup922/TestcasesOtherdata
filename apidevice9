@@ -1,0 +1,67 @@
+
+1. **Valid Input Test Case:**
+   - Description: Verify that the API returns the correct device information when valid user ID and country code are provided.
+   - Input: User ID exists in the system, valid country code.
+   - Expected Output: HTTP status code 200, response containing deviceToken, deviceType, deviceId, and deviceEnabled.
+
+2. **Invalid User ID Test Case:**
+   - Description: Ensure that the API handles the scenario when an invalid user ID is provided.
+   - Input: Non-existent user ID, valid country code.
+   - Expected Output: HTTP status code 404 (Not Found), error message indicating user not found.
+
+3. **Invalid Country Code Test Case:**
+   - Description: Verify that the API handles the scenario when an invalid country code is provided.
+   - Input: Valid user ID, non-existent country code.
+   - Expected Output: HTTP status code 404 (Not Found), error message indicating country code not found.
+
+4. **Missing User ID Test Case:**
+   - Description: Ensure that the API handles the scenario when the user ID parameter is missing.
+   - Input: Missing user ID parameter, valid country code.
+   - Expected Output: HTTP status code 400 (Bad Request), error message indicating missing user ID.
+
+5. **Missing Country Code Test Case:**
+   - Description: Verify that the API handles the scenario when the country code parameter is missing.
+   - Input: Valid user ID, missing country code parameter.
+   - Expected Output: HTTP status code 400 (Bad Request), error message indicating missing country code.
+
+6. **Empty Input Test Case:**
+   - Description: Ensure that the API handles empty input values gracefully.
+   - Input: Empty user ID, empty country code.
+   - Expected Output: HTTP status code 400 (Bad Request), error message indicating missing user ID and country code.
+
+7. **Authorization Test Case:**
+   - Description: Verify that the API requires proper authentication before returning the device information.
+   - Input: Valid user credentials, valid user ID, and country code.
+   - Expected Output: HTTP status code 200 (if authenticated), response containing deviceToken, deviceType, deviceId, and deviceEnabled.
+
+8. **Performance Test Case:**
+   - Description: Evaluate the API's performance by sending multiple concurrent requests.
+   - Input: Simulate high traffic by sending requests with varying user IDs and country codes simultaneously.
+   - Expected Output: Ensure that the API responds within an acceptable time frame and doesn't degrade under load.
+
+
+9. **Multiple Devices Test Case:**
+   - Description: Verify that the API correctly returns multiple devices if they exist for the specified user ID and country code.
+   - Input: Valid user ID, valid country code with multiple associated devices.
+   - Expected Output: HTTP status code 200, response containing an array of device objects, each including deviceToken, deviceType, deviceId, and deviceEnabled.
+
+10. **Empty Device List Test Case:**
+    - Description: Ensure that the API handles the scenario when there are no devices associated with the provided user ID and country code.
+    - Input: Valid user ID, valid country code with no associated devices.
+    - Expected Output: HTTP status code 200, empty response body or response indicating no devices found.
+
+11. **Sorting Test Case:**
+    - Description: Verify that the API returns devices in a sorted order, such as by device ID or device type.
+    - Input: Valid user ID, valid country code with multiple associated devices.
+    - Expected Output: HTTP status code 200, response containing devices sorted according to a specified criterion (e.g., ascending order of device IDs).
+
+12. **Pagination Test Case:**
+    - Description: Ensure that the API supports pagination for large datasets of devices.
+    - Input: Valid user ID, valid country code with a large number of associated devices.
+    - Expected Output: HTTP status code 200, response containing a subset of devices based on pagination parameters like page number and page size.
+
+13. **Performance with Multiple Devices Test Case:**
+    - Description: Evaluate the API's performance when handling requests for users with multiple associated devices.
+    - Input: Send requests for user IDs with a large number of associated devices, simulate high traffic.
+    - Expected Output: Ensure that the API responds within an acceptable time frame and doesn't degrade under load even with multiple devices.
+
