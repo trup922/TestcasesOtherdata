@@ -1,0 +1,120 @@
+To dynamically pass different `testCaseKey` values for different scenarios in your automation framework, you can use scenario tags in Cucumber or any other mechanism to associate specific test case keys with your test scenarios. Here’s a detailed approach using Cucumber with scenario tags:
+
+### Step-by-Step Guide
+
+#### 1. Annotate Scenarios with Tags in Your Feature File
+Use tags to annotate your scenarios with the respective `testCaseKey`.
+
+```gherkin
+Feature: Example feature
+
+  @TEST-123
+  Scenario: Example scenario 1
+    Given I have a configured Cucumber-Java project
+    When I run the Cucumber tests
+    Then I should see the step definitions generated
+
+  @TEST-456
+  Scenario: Example scenario 2
+    Given I have a configured Cucumber-Java project
+    When I run another set of Cucumber tests
+    Then I should see the results updated
+```
+
+#### 2. Capture Tags in Step Definitions
+In your step definitions, capture the tags and pass the corresponding `testCaseKey` to the `ZephyrUpdater`.
+
+```java
+import io.cucumber.java.After;
+import io.cucumber.java.Before;
+import io.cucumber.java.Scenario;
+import io.cucumber.java.en.Given;
+import io.cucumber.java.en.Then;
+import io.cucumber.java.en.When;
+import static org.junit.Assert.assertTrue;
+import java.util.Optional;
+
+public class ExampleSteps {
+
+    private String testCaseKey;
+
+    @Before
+    public void beforeScenario(Scenario scenario) {
+        Optional<String> testCaseTag = scenario.getSourceTagNames().stream()
+                .filter(tag -> tag.startsWith("@TEST-"))
+                .findFirst();
+
+        testCaseKey = testCaseTag.map(tag -> tag.substring(1)).orElse(null);
+    }
+
+    @Given("I have a configured Cucumber-Java project")
+    public void i_have_a_configured_Cucumber_Java_project() {
+        // Setup code here
+    }
+
+    @When("I run the Cucumber tests")
+    public void i_run_the_Cucumber_tests() {
+        // Test execution code here
+    }
+
+    @Then("I should see the step definitions generated")
+    public void i_should_see_the_step_definitions_generated() {
+        assertTrue("Step definitions generated", true);
+    }
+
+    @After
+    public void afterScenario(Scenario scenario) {
+        String status = scenario.isFailed() ? "Fail" : "Pass";
+        String cycleKey = "CYCLE-456"; // You might want to handle this dynamically as well
+
+        if (testCaseKey != null) {
+            ZephyrUpdater.updateTestResult(testCaseKey, status, cycleKey);
+        } else {
+            System.err.println("No testCaseKey found for scenario: " + scenario.getName());
+        }
+    }
+}
+```
+
+#### 3. ZephyrUpdater Utility Class
+Ensure your `ZephyrUpdater` class remains the same:
+
+```java
+import io.restassured.RestAssured;
+import io.restassured.response.Response;
+import org.json.JSONObject;
+
+public class ZephyrUpdater {
+
+    private static final String BASE_URL = "https://api.zephyrscale.smartbear.com/v2";
+    private static final String API_TOKEN = "your_api_token";
+
+    public static void updateTestResult(String testCaseKey, String status, String cycleKey) {
+        JSONObject payload = new JSONObject();
+        payload.put("status", status);
+        payload.put("projectKey", "your_project_key");
+        payload.put("testCaseKey", testCaseKey);
+        payload.put("testCycleKey", cycleKey);
+
+        Response response = RestAssured.given()
+            .header("Authorization", "Bearer " + API_TOKEN)
+            .header("Content-Type", "application/json")
+            .body(payload.toString())
+            .post(BASE_URL + "/testexecutions");
+
+        if (response.getStatusCode() == 201) {
+            System.out.println("Test result updated successfully.");
+        } else {
+            System.err.println("Failed to update test result: " + response.getBody().asString());
+        }
+    }
+}
+```
+
+### Explanation
+
+1. **Feature File Tags**: Each scenario is tagged with the corresponding `testCaseKey` using `@TEST-xxx`.
+2. **Capture Tags in `@Before` Hook**: The `beforeScenario` method captures the tag of the current scenario and extracts the `testCaseKey`.
+3. **Pass `testCaseKey` in `@After` Hook**: The `afterScenario` method uses the captured `testCaseKey` and the test result status to update Zephyr.
+
+This setup ensures that each scenario dynamically passes its respective `testCaseKey` to the Zephyr update utility, making the process seamless and automated.
