@@ -86,3 +86,19 @@ mvn -X test
     </build>
 </project>
 
+<plugin>
+  <groupId>org.apache.maven.plugins</groupId>
+  <artifactId>maven-surefire-plugin</artifactId>
+  <version>3.0.0-M5</version>
+  <configuration>
+    <parallel>methods</parallel>
+    <threadCount>4</threadCount>
+    <perCoreThreadCount>true</perCoreThreadCount>
+    <forkCount>1</forkCount>
+    <useUnlimitedThreads>false</useUnlimitedThreads>
+    <includes>
+      <include>**/*Runner.java</include>
+    </includes>
+  </configuration>
+</plugin>
+
