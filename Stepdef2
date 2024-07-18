@@ -1,0 +1,242 @@
+The `BasePage` class should include common utility methods that are frequently used across different page objects. Here are some typical methods you might include:
+
+1. **Click Method:** Click an element after waiting for it to be clickable.
+2. **Hover Method:** Hover over an element.
+3. **Get Tooltip Text Method:** Get the tooltip text when hovering over an element.
+4. **Wait for Element to be Visible Method:** Wait until an element is visible.
+5. **Wait for Element to be Clickable Method:** Wait until an element is clickable.
+6. **Send Keys Method:** Send keys to an input field after waiting for it to be visible.
+7. **Get Text Method:** Get text from an element after waiting for it to be visible.
+8. **Check if Element is Displayed Method:** Check if an element is displayed on the page.
+9. **Switch to Frame Method:** Switch to an iframe by its locator.
+10. **Switch to Default Content Method:** Switch back to the main document from an iframe.
+11. **JavaScript Click Method:** Click an element using JavaScript.
+
+Here’s how you might implement these methods in the `BasePage` class:
+
+```java
+import org.openqa.selenium.JavascriptExecutor;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.interactions.Actions;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
+
+public class BasePage {
+    protected WebDriver driver;
+    protected WebDriverWait wait;
+
+    public BasePage(WebDriver driver) {
+        this.driver = driver;
+        this.wait = new WebDriverWait(driver, 10);
+    }
+
+    public void click(WebElement element) {
+        wait.until(ExpectedConditions.elementToBeClickable(element)).click();
+    }
+
+    public void hover(WebElement element) {
+        Actions actions = new Actions(driver);
+        actions.moveToElement(element).perform();
+    }
+
+    public String getTooltipText(WebElement element) {
+        hover(element);
+        return element.getAttribute("title");
+    }
+
+    public void waitForElementToBeVisible(WebElement element) {
+        wait.until(ExpectedConditions.visibilityOf(element));
+    }
+
+    public void waitForElementToBeClickable(WebElement element) {
+        wait.until(ExpectedConditions.elementToBeClickable(element));
+    }
+
+    public void sendKeys(WebElement element, String text) {
+        waitForElementToBeVisible(element);
+        element.clear();
+        element.sendKeys(text);
+    }
+
+    public String getText(WebElement element) {
+        waitForElementToBeVisible(element);
+        return element.getText();
+    }
+
+    public boolean isElementDisplayed(WebElement element) {
+        try {
+            waitForElementToBeVisible(element);
+            return element.isDisplayed();
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    public void switchToFrame(WebElement frameElement) {
+        wait.until(ExpectedConditions.frameToBeAvailableAndSwitchToIt(frameElement));
+    }
+
+    public void switchToDefaultContent() {
+        driver.switchTo().defaultContent();
+    }
+
+    public void javascriptClick(WebElement element) {
+        JavascriptExecutor js = (JavascriptExecutor) driver;
+        js.executeScript("arguments[0].click();", element);
+    }
+}
+```
+
+### Example Usage in ViewerPage
+
+#### ViewerPage.java
+
+```java
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.FindBy;
+import org.openqa.selenium.support.PageFactory;
+
+public class ViewerPage extends BasePage {
+    @FindBy(id = "modelLoader")
+    WebElement modelLoader;
+
+    @FindBy(id = "orbitViewButton")
+    WebElement orbitViewButton;
+
+    @FindBy(id = "perspectiveModeButton")
+    WebElement perspectiveModeButton;
+
+    @FindBy(id = "orthographicModeButton")
+    WebElement orthographicModeButton;
+
+    @FindBy(id = "firstPersonModeButton")
+    WebElement firstPersonModeButton;
+
+    @FindBy(id = "panModeButton")
+    WebElement panModeButton;
+
+    @FindBy(id = "defaultViewButton")
+    WebElement defaultViewButton;
+
+    @FindBy(id = "cameraViewButton")
+    WebElement cameraViewButton;
+
+    public ViewerPage(WebDriver driver) {
+        super(driver);
+        PageFactory.initElements(driver, this);
+    }
+
+    public void displayViewer() {
+        // Logic to display viewer
+    }
+
+    public void loadModel() {
+        click(modelLoader);
+        // Additional logic to load model
+    }
+
+    public boolean isModelLoaded() {
+        // Logic to verify if model is loaded
+        return true;
+    }
+
+    public boolean isOrbitViewSelected() {
+        return orbitViewButton.getAttribute("class").contains("selected");
+    }
+
+    public boolean isTooltipDisplayed(String tooltip) {
+        return getTooltipText(orbitViewButton).equals(tooltip);
+    }
+
+    public void activatePerspectiveMode() {
+        click(perspectiveModeButton);
+    }
+
+    public void clickButton(String buttonName) {
+        switch (buttonName) {
+            case "Orthographic mode":
+                click(orthographicModeButton);
+                break;
+            case "Perspective mode":
+                click(perspectiveModeButton);
+                break;
+            // Add more cases as needed...
+        }
+    }
+
+    public boolean isProjectionTypeDisplayed(String projectionType) {
+        // Logic to verify projection type
+        return true;
+    }
+
+    public boolean isCameraViewActivated() {
+        return cameraViewButton.getAttribute("class").contains("active");
+    }
+
+    public void clickModeButton(String mode) {
+        switch (mode) {
+            case "First Person Mode":
+                click(firstPersonModeButton);
+                break;
+            // Add more cases as needed...
+        }
+    }
+
+    public boolean canNavigateInMode(String mode) {
+        // Logic to verify navigation in the specified mode
+        return true;
+    }
+
+    public void orbitModel() {
+        Actions actions = new Actions(driver);
+        actions.clickAndHold(orbitViewButton).moveByOffset(100, 100).release().perform();
+    }
+
+    public boolean canOrbitModel() {
+        // Logic to verify orbit functionality
+        return true;
+    }
+
+    public void panModel() {
+        Actions actions = new Actions(driver);
+        actions.clickAndHold(panModeButton).moveByOffset(100, 100).release().perform();
+    }
+
+    public boolean isModelTranslated() {
+        // Logic to verify model translation
+        return true;
+    }
+
+    public void clickDefaultViewButton() {
+        click(defaultViewButton);
+    }
+
+    public boolean isDefaultViewState() {
+        // Logic to verify default view state
+        return true;
+    }
+
+    public void compareNavigationBehavior() {
+        // Logic to compare navigation behavior
+    }
+
+    public boolean areBehaviorsSame() {
+        // Logic to verify behaviors
+        return true;
+    }
+
+    public void rotateAroundModel() {
+        Actions actions = new Actions(driver);
+        actions.clickAndHold(orbitViewButton).moveByOffset(100, 100).release().perform();
+    }
+
+    public boolean canRotateAroundObjectCenter() {
+        // Logic to verify rotation around object center
+        return true;
+    }
+}
+```
+
+This structure ensures that your `BasePage` contains reusable methods that can be used across different page objects, while `ViewerPage` contains methods specific to the viewer's functionality. This approach keeps your code organized and maintainable.
