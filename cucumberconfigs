@@ -102,3 +102,31 @@ mvn -X test
   </configuration>
 </plugin>
 
+<build>
+    <plugins>
+        <plugin>
+            <groupId>com.github.temyers</groupId>
+            <artifactId>cucumber-jvm-parallel-plugin</artifactId>
+            <version>5.0.0</version>
+            <executions>
+                <execution>
+                    <goals>
+                        <goal>generateRunners</goal>
+                    </goals>
+                </execution>
+            </executions>
+            <configuration>
+                <cucumberOutputDir>target</cucumberOutputDir>
+                <outputDirectory>src/test/java</outputDirectory>
+                <featuresDirectory>src/test/resources/features</featuresDirectory>
+                <glue>com.example.stepdefinitions</glue>
+                <tags>@yourTag</tags>
+                <parallelScheme>SCENARIO</parallelScheme>
+                <useTestNG>true</useTestNG>
+                <workers>2</workers>
+            </configuration>
+        </plugin>
+        <!-- Other plugins -->
+    </plugins>
+</build>
+
