@@ -1,0 +1,148 @@
+If `JiraService` is a utility class and you prefer to call its methods directly within the hooks, you can still use the `TestContext` class to manage dependencies. Here's how you can do it:
+
+1. **Define the `TestContext` Class:**
+
+   ```java
+   public class TestContext {
+       public WebDriver driver;
+       public JiraService jiraService;
+
+       public TestContext() {
+           // Initialize the WebDriver and JiraService
+           this.driver = new WebDriver(); // Replace with actual WebDriver initialization
+           this.jiraService = new JiraService();
+       }
+   }
+   ```
+
+2. **Configure PicoContainer for Dependency Injection:**
+
+   Make sure PicoContainer is configured to provide instances of `TestContext` for each scenario.
+
+   **cucumber.properties:**
+
+   ```
+   cucumber.object-factory=io.cucumber.picocontainer.PicoFactory
+   ```
+
+3. **Inject `TestContext` in Hooks:**
+
+   Update your hooks to use `TestContext`.
+
+   **Hooks:**
+
+   ```java
+   import io.cucumber.java.Before;
+   import io.cucumber.java.After;
+
+   public class Hooks {
+       private final TestContext testContext;
+
+       public Hooks(TestContext testContext) {
+           this.testContext = testContext;
+       }
+
+       @Before
+       public void beforeScenario() {
+           // Initialization logic if needed
+       }
+
+       @After
+       public void afterScenario() {
+           // Example of updating JIRA issue status during teardown
+           String issueKey = "some-issue-key"; // You may need to fetch/set this dynamically
+           String newStatus = "Done"; // Example status update
+
+           testContext.jiraService.setIssueKey(issueKey);
+           testContext.jiraService.updateIssueStatus(newStatus);
+           
+           // Clean up WebDriver
+           if (testContext.driver != null) {
+               testContext.driver.quit();
+           }
+       }
+   }
+   ```
+
+4. **Ensure Thread Safety in `JiraService`:**
+
+   **JiraService:**
+
+   ```java
+   public class JiraService {
+       private static final String BASE_URI = "https://your-jira-instance.atlassian.net";
+       private static final String AUTH_TOKEN = "your-auth-token"; // Use a more secure way to store this
+
+       private String issueKey;
+
+       public JiraService() {
+           RestAssured.baseURI = BASE_URI;
+       }
+
+       public void setIssueKey(String key) {
+           this.issueKey = key;
+       }
+
+       public void updateIssueStatus(String newStatus) {
+           String updatePayload = "{ \"fields\": { \"status\": { \"name\": \"" + newStatus + "\" } } }";
+
+           RestAssured
+               .given()
+               .auth()
+               .oauth2(AUTH_TOKEN)
+               .contentType("application/json")
+               .body(updatePayload)
+               .put("/rest/api/2/issue/" + issueKey)
+               .then()
+               .statusCode(204);
+       }
+
+       public String getIssueStatus() {
+           Response response = RestAssured
+               .given()
+               .auth()
+               .oauth2(AUTH_TOKEN)
+               .get("/rest/api/2/issue/" + issueKey);
+
+           return response.jsonPath().getString("fields.status.name");
+       }
+   }
+   ```
+
+5. **Initialize `TestContext` in Step Definitions:**
+
+   Make sure your step definition classes receive `TestContext` via PicoContainer.
+
+   **Step Definitions:**
+
+   ```java
+   import io.cucumber.java.en.Given;
+   import io.cucumber.java.en.When;
+   import io.cucumber.java.en.Then;
+
+   public class SomeStepDefinitions {
+       private final TestContext testContext;
+
+       public SomeStepDefinitions(TestContext testContext) {
+           this.testContext = testContext;
+       }
+
+       @Given("some setup step")
+       public void someSetupStep() {
+           // Example usage of WebDriver
+           testContext.driver.get("https://example.com");
+       }
+
+       @When("some action step")
+       public void someActionStep() {
+           // Perform actions using WebDriver or other services
+       }
+
+       @Then("some verification step")
+       public void someVerificationStep() {
+           // Perform verifications
+       }
+   }
+   ```
+
+With this setup, `JiraService` is used as a utility and its methods are called in the hooks. The `TestContext` ensures that each scenario has its own instance of `WebDriver` and `JiraService`, maintaining isolation and thread safety.
