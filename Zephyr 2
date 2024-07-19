@@ -1,0 +1,136 @@
+To update Selenium test results in Jira Zephyr using RestAssured, you need to interact with the Zephyr API to create and update test executions. Here’s a step-by-step guide on how to do this:
+
+### Prerequisites:
+1. **Jira and Zephyr API tokens**: Make sure you have the necessary tokens and permissions.
+2. **Selenium test results**: Ensure that your Selenium tests are run and results are stored in a variable or a file.
+3. **Dependencies**: You need to include RestAssured and any other required libraries in your project.
+
+### Step 1: Add dependencies
+Add the required dependencies for RestAssured and JSON handling in your `pom.xml` (for Maven) or `build.gradle` (for Gradle).
+
+For Maven:
+```xml
+<dependency>
+    <groupId>io.rest-assured</groupId>
+    <artifactId>rest-assured</artifactId>
+    <version>4.3.3</version>
+    <scope>test</scope>
+</dependency>
+<dependency>
+    <groupId>com.fasterxml.jackson.core</groupId>
+    <artifactId>jackson-databind</artifactId>
+    <version>2.11.3</version>
+</dependency>
+```
+
+For Gradle:
+```groovy
+testImplementation 'io.rest-assured:rest-assured:4.3.3'
+testImplementation 'com.fasterxml.jackson.core:jackson-databind:2.11.3'
+```
+
+### Step 2: Create methods to interact with Zephyr API
+
+Here’s an example code snippet to create a test execution and update the test execution result:
+
+```java
+import io.restassured.RestAssured;
+import io.restassured.response.Response;
+import static io.restassured.RestAssured.given;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import java.util.HashMap;
+import java.util.Map;
+
+public class ZephyrIntegration {
+
+    private static final String BASE_URL = "https://your-jira-instance.atlassian.net";
+    private static final String ZAPI_BASE_URL = BASE_URL + "/rest/zapi/latest";
+    private static final String USERNAME = "your-username";
+    private static final String API_TOKEN = "your-api-token";
+
+    public static void main(String[] args) {
+        // Example usage
+        String issueKey = "TEST-1"; // Replace with your test issue key
+        String cycleId = "1"; // Replace with your test cycle id
+        String projectId = "10000"; // Replace with your project id
+        String versionId = "-1"; // Replace with your version id
+
+        String executionId = createTestExecution(issueKey, cycleId, projectId, versionId);
+        updateTestExecutionResult(executionId, "PASS");
+    }
+
+    public static String createTestExecution(String issueKey, String cycleId, String projectId, String versionId) {
+        RestAssured.baseURI = ZAPI_BASE_URL;
+
+        Map<String, String> body = new HashMap<>();
+        body.put("issueId", issueKey);
+        body.put("cycleId", cycleId);
+        body.put("projectId", projectId);
+        body.put("versionId", versionId);
+
+        Response response = given()
+            .auth().preemptive().basic(USERNAME, API_TOKEN)
+            .header("Content-Type", "application/json")
+            .body(body)
+            .when()
+            .post("/execution")
+            .then()
+            .statusCode(200)
+            .extract().response();
+
+        return response.jsonPath().getString("execution.id");
+    }
+
+    public static void updateTestExecutionResult(String executionId, String status) {
+        RestAssured.baseURI = ZAPI_BASE_URL;
+
+        Map<String, Object> body = new HashMap<>();
+        Map<String, String> statusMap = new HashMap<>();
+        statusMap.put("id", getStatusId(status));
+        body.put("status", statusMap);
+
+        given()
+            .auth().preemptive().basic(USERNAME, API_TOKEN)
+            .header("Content-Type", "application/json")
+            .body(body)
+            .when()
+            .put("/execution/" + executionId + "/execute")
+            .then()
+            .statusCode(200);
+    }
+
+    private static String getStatusId(String status) {
+        switch (status.toUpperCase()) {
+            case "PASS":
+                return "1";
+            case "FAIL":
+                return "2";
+            case "WIP":
+                return "3";
+            case "BLOCKED":
+                return "4";
+            default:
+                return "-1";
+        }
+    }
+}
+```
+
+### Explanation:
+1. **Create Test Execution**: 
+    - The `createTestExecution` method sends a POST request to create a test execution in Zephyr.
+    - The `issueKey`, `cycleId`, `projectId`, and `versionId` are passed as parameters.
+    - The method returns the `executionId` of the created test execution.
+
+2. **Update Test Execution Result**:
+    - The `updateTestExecutionResult` method sends a PUT request to update the status of the test execution.
+    - The `executionId` and `status` are passed as parameters.
+    - The status is mapped to its corresponding ID using the `getStatusId` method.
+
+### Notes:
+- Ensure that the Jira user has permissions to create and update test executions in Zephyr.
+- You may need to adjust the API endpoints and request bodies based on your Jira and Zephyr configurations.
+- Handle exceptions and errors appropriately in a production environment.
+
+This example provides a basic implementation. Depending on your specific requirements, you may need to expand the functionality to include additional features such as logging, error handling, and more complex data handling.
