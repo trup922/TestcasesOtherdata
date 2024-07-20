@@ -1,0 +1,97 @@
+Yes, you can use RestAssured for this task. RestAssured is a popular library for testing REST APIs in Java. Below is an example of how you can achieve the same result using RestAssured.
+
+First, make sure you have the RestAssured dependency in your `pom.xml` if you are using Maven:
+
+```xml
+<dependency>
+    <groupId>io.rest-assured</groupId>
+    <artifactId>rest-assured</artifactId>
+    <version>4.4.0</version>
+    <scope>test</scope>
+</dependency>
+```
+
+Here is the Java code using RestAssured:
+
+```java
+import io.restassured.RestAssured;
+import io.restassured.response.Response;
+import io.restassured.specification.RequestSpecification;
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class Main {
+    public static void main(String[] args) {
+        String apiUrl = "https://api.zephyrscale.smartbear.com/v2/testexecutions?testCycle=KPB-R102";
+        int startAt = 0;
+        int maxResults = 10;
+        boolean isLast = false;
+        
+        List<JSONObject> allResults = new ArrayList<>();
+
+        while (!isLast) {
+            RequestSpecification request = RestAssured.given()
+                .param("startAt", startAt)
+                .param("maxResults", maxResults)
+                .header("Accept", "application/json");
+
+            Response response = request.get(apiUrl);
+            JSONObject jsonResponse = new JSONObject(response.asString());
+            JSONArray values = jsonResponse.getJSONArray("values");
+            isLast = jsonResponse.getBoolean("isLast");
+
+            for (int i = 0; i < values.length(); i++) {
+                allResults.add(values.getJSONObject(i));
+            }
+
+            startAt += maxResults;
+        }
+
+        List<ExecutionTestCase> extractedData = extractIds(allResults);
+
+        // Print or use the extracted data as needed
+        for (ExecutionTestCase data : extractedData) {
+            System.out.println("Execution ID: " + data.getExecutionId() + ", Testcase ID: " + data.getTestCaseId());
+        }
+    }
+
+    public static List<ExecutionTestCase> extractIds(List<JSONObject> results) {
+        List<ExecutionTestCase> extractedData = new ArrayList<>();
+        for (JSONObject result : results) {
+            long executionId = result.getLong("id");
+            long testCaseId = result.getJSONObject("testCase").getLong("id");
+            extractedData.add(new ExecutionTestCase(executionId, testCaseId));
+        }
+        return extractedData;
+    }
+}
+
+class ExecutionTestCase {
+    private long executionId;
+    private long testCaseId;
+
+    public ExecutionTestCase(long executionId, long testCaseId) {
+        this.executionId = executionId;
+        this.testCaseId = testCaseId;
+    }
+
+    public long getExecutionId() {
+        return executionId;
+    }
+
+    public long getTestCaseId() {
+        return testCaseId;
+    }
+}
+```
+
+### Explanation
+
+1. **API Requests**: The code sends requests to the API endpoint using RestAssured, handling pagination by adjusting the `startAt` parameter.
+2. **Extracting Data**: It parses the JSON response to extract `execution_id` and `testcase_id` from each result.
+3. **Data Handling**: The extracted data is stored in a list of `ExecutionTestCase` objects, which can then be printed or further processed.
+
+Make sure to replace `https://api.zephyrscale.smartbear.com/v2/testexecutions?testCycle=KPB-R102` with your actual API URL and parameters.
