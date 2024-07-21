@@ -186,3 +186,178 @@ public class MyStepDefinitions {
 4. **Step Definitions**: Use `TestContext` to access WebDriver and other shared objects.
 
 This setup ensures that the Zephyr API data is fetched once at the beginning, and the test execution status is updated after each scenario.
+__------------------000000--------------+
+To use TestNG's `@BeforeSuite` annotation in your Cucumber hooks, you need to set up a way to run TestNG and Cucumber together. You can achieve this by using a `TestNGCucumberRunner` in your test suite class. Here’s how you can integrate `@BeforeSuite` into your setup:
+
+1. **Create a TestNG Test Suite Class**: This class will use `TestNGCucumberRunner` to run the Cucumber features and execute the `@BeforeSuite` method.
+
+2. **Update Your Hooks Class**: Use `@BeforeSuite` to initialize the Zephyr data and store it in `TestContext`.
+
+Here are the steps and the required code:
+
+### Step 1: Create a TestNG Test Suite Class
+
+Create a class to run your Cucumber tests using TestNG. This class will also include the `@BeforeSuite` method.
+
+```java
+package awesomecucumber;
+
+import io.cucumber.testng.AbstractTestNGCucumberTests;
+import io.cucumber.testng.CucumberOptions;
+import io.cucumber.testng.TestNGCucumberRunner;
+import org.testng.annotations.BeforeSuite;
+import org.testng.annotations.AfterSuite;
+
+@CucumberOptions(
+        features = "src/test/resources/features",
+        glue = {"awesomecucumber.hooks", "awesomecucumber.steps"}
+)
+public class TestRunner extends AbstractTestNGCucumberTests {
+
+    private TestNGCucumberRunner testNGCucumberRunner;
+
+    @BeforeSuite(alwaysRun = true)
+    public void setUp() {
+        testNGCucumberRunner = new TestNGCucumberRunner(this.getClass());
+        ZephyrApiClient zephyrApiClient = new ZephyrApiClient();
+        String testCycleId = System.getProperty("testCycleId"); // or read from env properties
+        if (testCycleId != null && !testCycleId.isEmpty()) {
+            TestContext.getInstance().setZephyrTestExecutions(zephyrApiClient.getTestExecutions(testCycleId));
+        }
+    }
+
+    @AfterSuite(alwaysRun = true)
+    public void tearDown() {
+        if (testNGCucumberRunner != null) {
+            testNGCucumberRunner.finish();
+        }
+    }
+}
+```
+
+### Step 2: Update the TestContext Class
+
+Update `TestContext` to use a singleton pattern to ensure it is easily accessible across your project.
+
+```java
+package awesomecucumber.context;
+
+import awesomecucumber.domainobjects.BillingDetails;
+import awesomecucumber.domainobjects.Cookies;
+import org.openqa.selenium.WebDriver;
+
+import java.util.Map;
+
+public class TestContext {
+    public WebDriver driver;
+    public BillingDetails billingDetails;
+    public Cookies cookies;
+    private Map<String, String> zephyrTestExecutions; // Map of test case ID to test execution ID
+
+    private static TestContext instance;
+
+    private TestContext() {
+        cookies = new Cookies();
+        cookies.setCookies(new io.restassured.http.Cookies());
+    }
+
+    public static TestContext getInstance() {
+        if (instance == null) {
+            instance = new TestContext();
+        }
+        return instance;
+    }
+
+    public void setZephyrTestExecutions(Map<String, String> zephyrTestExecutions) {
+        this.zephyrTestExecutions = zephyrTestExecutions;
+    }
+
+    public Map<String, String> getZephyrTestExecutions() {
+        return zephyrTestExecutions;
+    }
+}
+```
+
+### Step 3: Update Hooks Class
+
+Modify your hooks class to fetch the Zephyr data from `TestContext`.
+
+```java
+package awesomecucumber.hooks;
+
+import awesomecucumber.api.ZephyrApiClient;
+import awesomecucumber.context.TestContext;
+import awesomecucumber.factory.DriverFactory;
+import io.cucumber.java.After;
+import io.cucumber.java.Before;
+import io.cucumber.java.Scenario;
+import org.openqa.selenium.WebDriver;
+import java.util.Map;
+
+public class MyHooks {
+    private WebDriver driver;
+    private final TestContext context;
+    private static ZephyrApiClient zephyrApiClient;
+
+    public MyHooks() {
+        this.context = TestContext.getInstance();
+    }
+
+    @Before(order = 1)
+    public void before(Scenario scenario) {
+        System.out.println("Thread id " + Thread.currentThread().getId() + ", Scenario name " + scenario.getName());
+        driver = DriverFactory.initializeDriver(System.getProperty("browser", "chrome"));
+        context.driver = driver;
+    }
+
+    @After
+    public void after(Scenario scenario) {
+        System.out.println("Thread id " + Thread.currentThread().getId() + ", Scenario name " + scenario.getName());
+        String testCaseId = scenario.getId(); // Assuming scenario ID matches test case ID
+        String testExecutionId = context.getZephyrTestExecutions().get(testCaseId);
+
+        if (testExecutionId != null) {
+            String status = scenario.isFailed() ? "FAIL" : "PASS";
+            zephyrApiClient.updateTestExecutionStatus(testExecutionId, status);
+        }
+
+        driver.quit();
+    }
+}
+```
+
+### Step 4: Use TestContext in Step Definitions
+
+Ensure your step definitions use `TestContext` to access WebDriver and other dependencies.
+
+```java
+package awesomecucumber.steps;
+
+import awesomecucumber.context.TestContext;
+import org.openqa.selenium.WebDriver;
+import io.cucumber.java.en.Given;
+
+public class MyStepDefinitions {
+    private final TestContext context;
+    private WebDriver driver;
+
+    public MyStepDefinitions() {
+        this.context = TestContext.getInstance();
+        this.driver = context.driver;
+    }
+
+    @Given("I am on the homepage")
+    public void i_am_on_the_homepage() {
+        driver.get("http://example.com");
+    }
+}
+```
+
+### Summary
+
+1. **TestNG Test Suite**: Create a TestNG test suite class with `@BeforeSuite` to initialize Zephyr data.
+2. **TestContext Singleton**: Use a singleton pattern for `TestContext`.
+3. **Hooks**: Fetch Zephyr data from `TestContext`.
+4. **Step Definitions**: Access WebDriver and other shared objects from `TestContext`.
+
+This setup ensures that the Zephyr API data is fetched once at the beginning of the test suite execution and the test execution status is updated after each scenario.
