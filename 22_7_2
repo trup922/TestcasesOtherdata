@@ -1,0 +1,67 @@
+You can refactor the duplicated code into a common method to improve readability and reduce redundancy. Here's how you can create a common method to verify the mode selection and update your code accordingly:
+
+### Common Method for Mode Selection
+
+```java
+import org.openqa.selenium.By;
+import org.openqa.selenium.NoSuchElementException;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+public class ModeSelector {
+    private static final Logger logger = LoggerFactory.getLogger(ModeSelector.class);
+    private WebDriver driver;
+
+    public ModeSelector(WebDriver driver) {
+        this.driver = driver;
+    }
+
+    public boolean verifyModeSelection(String mode, String xpath, String modeName) {
+        try {
+            WebElement modeIcon = driver.findElement(By.xpath(xpath));
+            String attribute = modeIcon.getAttribute("class");
+            if (!attribute.contains("selected")) {
+                logger.warn("{} mode is not correctly selected. Attribute value: {}", modeName, attribute);
+                return false;
+            }
+            logger.info("{} mode correctly selected", modeName);
+            return true;
+        } catch (NoSuchElementException e) {
+            logger.error("{} icon not found", modeName, e);
+            return false;
+        }
+    }
+}
+```
+
+### Updated Code with Common Method
+
+Replace the duplicated code in your method with calls to the common method:
+
+```java
+public boolean verifyModeSelection(String mode) {
+    logger.info("Verifying mode selection: {}", mode);
+    ModeSelector modeSelector = new ModeSelector(driver);
+
+    switch (mode.toLowerCase()) {
+        case ORBIT_MODE:
+            return modeSelector.verifyModeSelection(mode, "//div[@aria-label='Orbit Mode']/div", "Orbit");
+
+        case PERSPECTIVE_MODE:
+            return modeSelector.verifyModeSelection(mode, "//div[@aria-label='Perspective']/div", "Perspective");
+
+        default:
+            logger.error("Invalid mode: {}", mode);
+            return false;
+    }
+}
+```
+
+### Key Points:
+1. **Create a common method `verifyModeSelection`** in the `ModeSelector` class to handle the verification logic.
+2. **Update the `verifyModeSelection` method** in your original class to call the common method with appropriate parameters.
+3. **Pass parameters like `xpath` and `modeName`** to the common method to handle different modes.
+
+This refactoring improves the maintainability of your code and makes it easier to handle any future changes to the verification logic.
