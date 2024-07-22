@@ -1,0 +1,40 @@
+private static final Logger logger = LoggerFactory.getLogger(YourClassName.class);
+private static final String ORBIT_MODE = "orbit mode";
+private static final String ORBIT_ICON_XPATH = "//img[@data-testid='orbit_icon']";
+private static final String FILTER_ATTRIBUTE = "filter";
+private static final String EXPECTED_FILTER_VALUE = "0.81";
+
+/**
+ * Verifies if the specified mode is correctly selected.
+ * @param mode The mode to verify (e.g., "orbit mode")
+ * @return true if the mode is correctly selected, false otherwise
+ */
+public boolean verifyModeSelection(String mode) {
+    logger.info("Verifying mode selection: {}", mode);
+    
+    switch (mode.toLowerCase()) {
+        case ORBIT_MODE:
+            try {
+                WebElement orbitIcon = driver.findElement(By.xpath(ORBIT_ICON_XPATH));
+                String visible = orbitIcon.getCssValue(FILTER_ATTRIBUTE);
+                logger.debug("Orbit icon filter value: {}", visible);
+                
+                if (!visible.contains(EXPECTED_FILTER_VALUE)) {
+                    logger.warn("Orbit mode not correctly selected. Filter value: {}", visible);
+                    return false;
+                }
+                logger.info("Orbit mode correctly selected");
+                return true;
+            } catch (NoSuchElementException e) {
+                logger.error("Orbit icon not found", e);
+                return false;
+            } catch (Exception e) {
+                logger.error("Error verifying orbit mode selection", e);
+                return false;
+            }
+        // Add cases for other modes here
+        default:
+            logger.warn("Unsupported mode: {}", mode);
+            return false;
+    }
+}
