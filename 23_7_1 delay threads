@@ -1,0 +1,120 @@
+To run multiple threads in parallel with a 500-millisecond delay between thread starts in a Cucumber framework using PicoContainer and TestNG, you can implement a custom TestNG listener. This listener will control the thread execution and introduce the desired delay. Here's how you can achieve this:
+
+1. Create a custom TestNG listener:
+
+```java
+import org.testng.IMethodInstance;
+import org.testng.IMethodInterceptor;
+import org.testng.ITestContext;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+
+public class DelayedParallelExecutionListener implements IMethodInterceptor {
+    private static final long DELAY_BETWEEN_THREADS = 500; // 500 milliseconds
+    private static final AtomicInteger threadCounter = new AtomicInteger(0);
+
+    @Override
+    public List<IMethodInstance> intercept(List<IMethodInstance> methods, ITestContext context) {
+        int threadIndex = threadCounter.getAndIncrement();
+        long delayForThisThread = threadIndex * DELAY_BETWEEN_THREADS;
+
+        try {
+            Thread.sleep(delayForThisThread);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+
+        return methods;
+    }
+}
+```
+
+2. Update your TestNG XML file to use this listener:
+
+```xml
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<suite name="Parallel Test Suite" parallel="tests" thread-count="5">
+    <listeners>
+        <listener class-name="path.to.your.DelayedParallelExecutionListener"/>
+    </listeners>
+    
+    <test name="Test 1">
+        <classes>
+            <class name="your.test.class1"/>
+        </classes>
+    </test>
+    
+    <test name="Test 2">
+        <classes>
+            <class name="your.test.class2"/>
+        </classes>
+    </test>
+    
+    <!-- Add more test classes as needed -->
+</suite>
+```
+
+3. Ensure your Cucumber runner class is configured to use TestNG:
+
+```java
+@CucumberOptions(
+    features = "src/test/resources/features",
+    glue = {"your.step.definitions.package"},
+    plugin = {"pretty", "html:target/cucumber-reports"}
+)
+public class TestNGCucumberRunner extends AbstractTestNGCucumberTests {
+    @Override
+    @DataProvider(parallel = true)
+    public Object[][] scenarios() {
+        return super.scenarios();
+    }
+}
+```
+
+4. If you're using PicoContainer for dependency injection, ensure you have a proper setup for thread-safe object sharing:
+
+```java
+public class TestContext {
+    private final WebDriver driver;
+    // Add other shared objects as needed
+
+    public TestContext() {
+        this.driver = initializeDriver(); // Initialize your WebDriver
+    }
+
+    public WebDriver getDriver() {
+        return driver;
+    }
+
+    // Add other getters and methods as needed
+}
+```
+
+5. In your step definitions, use the TestContext:
+
+```java
+public class StepDefinitions {
+    private final TestContext testContext;
+
+    public StepDefinitions(TestContext testContext) {
+        this.testContext = testContext;
+    }
+
+    @Given("I am on the login page")
+    public void iAmOnTheLoginPage() {
+        WebDriver driver = testContext.getDriver();
+        // Use the driver to navigate to the login page
+    }
+
+    // Other step definitions
+}
+```
+
+This setup will:
+1. Run your Cucumber scenarios in parallel using TestNG.
+2. Introduce a 500-millisecond delay between the start of each thread.
+3. Use PicoContainer for dependency injection, ensuring that each thread has its own instance of shared objects like WebDriver.
+
+Remember to adjust the `thread-count` in the TestNG XML file based on your needs and system capabilities. Also, ensure that your feature files and step definitions are designed to run independently and in parallel.
+
+Would you like me to explain any part of this setup in more detail or discuss how to integrate it with your existing framework?
