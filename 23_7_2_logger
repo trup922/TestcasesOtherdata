@@ -1,0 +1,105 @@
+To save the logback.xml configuration file and direct SLF4J console logs to a new framework-level directory, you can follow these steps:
+
+1. Create a new directory at the framework level, let's call it "logs".
+
+2. Update your logback.xml configuration to save logs to this new directory. Place this file in src/main/resources or src/test/resources:
+
+```xml
+<configuration>
+    <property name="LOG_DIR" value="./logs" />
+    <property name="LOG_FILE" value="test-execution" />
+
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_DIR}/${LOG_FILE}.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_DIR}/${LOG_FILE}-%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <root level="INFO">
+        <appender-ref ref="CONSOLE" />
+        <appender-ref ref="FILE" />
+    </root>
+</configuration>
+```
+
+This configuration will:
+- Output logs to both console and file
+- Save log files in the ./logs directory
+- Create a new log file each day, keeping logs for the last 30 days
+
+3. In your TestNGRunner class, add a method to create the logs directory if it doesn't exist:
+
+```java
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
+public class TestNGRunner extends AbstractTestNGCucumberTests {
+    private static final Logger logger = LoggerFactory.getLogger(TestNGRunner.class);
+
+    @BeforeSuite(alwaysRun = true)
+    public void setUp() {
+        createLogsDirectory();
+        clearScreenshotFolder();
+        // ... other setup code ...
+    }
+
+    private void createLogsDirectory() {
+        Path path = Paths.get("./logs");
+        try {
+            Files.createDirectories(path);
+            logger.info("Logs directory created successfully");
+        } catch (IOException e) {
+            logger.error("Error creating logs directory", e);
+        }
+    }
+
+    // ... other methods ...
+}
+```
+
+4. To programmatically set the log file location, you can do this in your setUp method:
+
+```java
+@BeforeSuite(alwaysRun = true)
+public void setUp() {
+    setLogFileLocation();
+    createLogsDirectory();
+    clearScreenshotFolder();
+    // ... other setup code ...
+}
+
+private void setLogFileLocation() {
+    System.setProperty("LOG_DIR", "./logs");
+    System.setProperty("LOG_FILE", "test-execution");
+}
+```
+
+5. If you want to dynamically name log files (e.g., based on test run time), you can modify the setLogFileLocation method:
+
+```java
+private void setLogFileLocation() {
+    String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+    System.setProperty("LOG_DIR", "./logs");
+    System.setProperty("LOG_FILE", "test-execution_" + timestamp);
+}
+```
+
+This setup will:
+- Create a "logs" directory at the framework level if it doesn't exist
+- Save log files in this directory
+- Output logs to both console and file
+- Create a new log file for each test run (or daily, depending on your configuration)
+
+Remember to add the necessary import statements for the classes used in these code snippets. This approach provides a clean and organized way to manage your logs within your test automation framework.
