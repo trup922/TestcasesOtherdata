@@ -1,0 +1,187 @@
+Thank you for providing more context. Since your software uses xeokit with WebGL2, we can tailor the approach to work with xeokit's API. Xeokit is a powerful WebGL-based 3D visualization engine, and it provides a comprehensive JavaScript API that we can leverage through Selenium's JavascriptExecutor.
+
+Here's an example of how you might structure your Java code to interact with a xeokit-based 3D model:
+
+```java
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.JavascriptExecutor;
+
+public class XeokitModelAutomation {
+    public static void main(String[] args) {
+        System.setProperty("webdriver.chrome.driver", "path/to/chromedriver");
+        WebDriver driver = new ChromeDriver();
+        JavascriptExecutor js = (JavascriptExecutor) driver;
+
+        try {
+            driver.get("https://your-xeokit-model-page.com");
+
+            // Wait for the model to load (you might need to adjust the time or use WebDriverWait)
+            Thread.sleep(5000);
+
+            // Example commands to interact with the xeokit model
+            // Note: These are examples and may need to be adjusted based on your specific xeokit setup
+
+            // Rotate the camera
+            js.executeScript("viewer.camera.orbit([-45, 0, 0]);");
+
+            // Zoom in
+            js.executeScript("viewer.camera.zoom(viewer.camera.eye, 1.5);");
+
+            // Show/hide an object (assuming you know its ID)
+            js.executeScript("viewer.scene.objects['objectId'].visible = false;");
+
+            // Change object color
+            js.executeScript("viewer.scene.objects['objectId'].color = [1, 0, 0];");
+
+            // Take a screenshot (if your xeokit setup includes this functionality)
+            js.executeScript("viewer.scene.canvas.getImageData();");
+
+            // You can add more xeokit-specific commands here
+
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } finally {
+            driver.quit();
+        }
+    }
+}
+```
+
+Keep in mind:
+
+1. The exact commands will depend on how your xeokit viewer is set up. You might need to adjust the JavaScript commands based on your specific implementation.
+
+2. Make sure you have the correct IDs or selectors for the objects you want to interact with.
+
+3. You may need to implement waits (either Thread.sleep or WebDriverWait) to ensure the model and scene are fully loaded before interacting with them.
+
+4. Error handling: Wrap your JavaScript executions in try-catch blocks to handle any errors that might occur during execution.
+
+5. For more complex interactions, you might want to create helper methods in your Java code to encapsulate common xeokit operations.
+
+6. If you need to retrieve data from the xeokit scene (like object properties, camera position, etc.), you can use JavascriptExecutor's executeScript method with a return value.
+
+Here's an example of a helper method for rotating the camera:
+
+```java
+public void rotateCamera(WebDriver driver, double x, double y, double z) {
+    JavascriptExecutor js = (JavascriptExecutor) driver;
+    js.executeScript(String.format("viewer.camera.orbit([%f, %f, %f]);", x, y, z));
+}
+```
+
+Would you like me to explain any of these concepts further or provide examples of other xeokit-specific interactions?
+
+I understand. When working with a 3D model rendered entirely on a canvas, without DOM elements for individual objects, we need to approach this differently. In this case, we'll need to interact directly with the xeokit viewer's API through JavaScript. Here's how we can adapt our approach:
+
+1. First, we need to ensure that the xeokit viewer is accessible from the global scope in the browser. If it's not, we may need to add some code to the web page to expose it.
+
+2. Then, we can use Selenium's JavascriptExecutor to interact with the viewer. Here's an updated example:
+
+```java
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.JavascriptExecutor;
+import org.openqa.selenium.support.ui.WebDriverWait;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import java.time.Duration;
+
+public class XeokitCanvasAutomation {
+    private WebDriver driver;
+    private JavascriptExecutor js;
+    private WebDriverWait wait;
+
+    public XeokitCanvasAutomation() {
+        System.setProperty("webdriver.chrome.driver", "path/to/chromedriver");
+        driver = new ChromeDriver();
+        js = (JavascriptExecutor) driver;
+        wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+    }
+
+    public void loadModel(String url) {
+        driver.get(url);
+        // Wait for the canvas to be present
+        wait.until(ExpectedConditions.presenceOfElementLocated(By.tagName("canvas")));
+        // Additional wait to ensure the model is loaded (adjust time as needed)
+        try {
+            Thread.sleep(5000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void rotateCamera(double x, double y, double z) {
+        js.executeScript(String.format("viewer.camera.orbit([%f, %f, %f]);", x, y, z));
+    }
+
+    public void zoomCamera(double factor) {
+        js.executeScript(String.format("viewer.camera.zoom(viewer.camera.eye, %f);", factor));
+    }
+
+    public void toggleObjectVisibility(String objectId) {
+        js.executeScript(String.format(
+            "var obj = viewer.scene.objects['%s']; " +
+            "if (obj) { obj.visible = !obj.visible; }",
+            objectId
+        ));
+    }
+
+    public void highlightObject(String objectId) {
+        js.executeScript(String.format(
+            "var obj = viewer.scene.objects['%s']; " +
+            "if (obj) { viewer.scene.setObjectsHighlighted([obj], true); }",
+            objectId
+        ));
+    }
+
+    public String getObjectInfo(String objectId) {
+        return (String) js.executeScript(String.format(
+            "var obj = viewer.scene.objects['%s']; " +
+            "return obj ? JSON.stringify({id: obj.id, visible: obj.visible, position: obj.position}) : 'Object not found';",
+            objectId
+        ));
+    }
+
+    public void close() {
+        driver.quit();
+    }
+
+    public static void main(String[] args) {
+        XeokitCanvasAutomation automation = new XeokitCanvasAutomation();
+        try {
+            automation.loadModel("https://your-xeokit-model-page.com");
+            automation.rotateCamera(45, 0, 0);
+            automation.zoomCamera(1.5);
+            automation.toggleObjectVisibility("object1");
+            automation.highlightObject("object2");
+            String objectInfo = automation.getObjectInfo("object3");
+            System.out.println(objectInfo);
+        } finally {
+            automation.close();
+        }
+    }
+}
+```
+
+Key points about this approach:
+
+1. We're interacting directly with the xeokit viewer API through JavaScript.
+
+2. We assume that the xeokit viewer instance is accessible as `viewer` in the global scope. If it's not, you'll need to adjust the JavaScript to access it correctly.
+
+3. We use methods like `rotateCamera`, `zoomCamera`, etc., which encapsulate the JavaScript calls.
+
+4. The `getObjectInfo` method demonstrates how to retrieve information about objects in the scene.
+
+5. Error handling is minimal here for brevity. In a production environment, you'd want to add more robust error checking and handling.
+
+6. You may need to adjust wait times or add more sophisticated waiting mechanisms depending on how your model loads.
+
+7. This approach assumes you know the IDs of the objects you want to interact with. If you don't, you might need to implement methods to search for objects based on other criteria (like position, type, etc.).
+
+Remember, the exact methods and properties available will depend on how your xeokit viewer is set up and which version you're using. You might need to consult your specific xeokit documentation and adjust the JavaScript accordingly.
+
+Would you like me to explain any part of this approach in more detail?
