@@ -185,3 +185,170 @@ Key points about this approach:
 Remember, the exact methods and properties available will depend on how your xeokit viewer is set up and which version you're using. You might need to consult your specific xeokit documentation and adjust the JavaScript accordingly.
 
 Would you like me to explain any part of this approach in more detail?
+
+
+Thank you for that valuable information. If you're able to access the WebGL2 context directly, we can use that to confirm the canvas is correctly set up and potentially find a way to interact with the xeokit viewer. Let's adjust our approach based on this.
+
+First, let's try some commands in the Chrome console to verify and explore:
+
+1. Get the canvas and its WebGL2 context:
+```javascript
+var canvas = document.getElementById('your-canvas-id');
+var ctx = canvas.getContext('webgl2');
+console.log(ctx);
+```
+
+2. Check if xeokit stores its viewer instance on the canvas:
+```javascript
+console.log(canvas.xeokit);
+console.log(canvas.__xeokit_viewer__);
+```
+
+3. If those don't work, try to find the viewer in the window object:
+```javascript
+function findViewer(obj) {
+  for (let prop in obj) {
+    if (obj[prop] && typeof obj[prop] === 'object' && obj[prop].scene && obj[prop].camera) {
+      return obj[prop];
+    }
+  }
+  for (let prop in obj) {
+    if (obj[prop] && typeof obj[prop] === 'object') {
+      const result = findViewer(obj[prop]);
+      if (result) return result;
+    }
+  }
+  return null;
+}
+var viewer = findViewer(window);
+console.log(viewer);
+```
+
+Now, let's update our Java code to use this information:
+
+```java
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.JavascriptExecutor;
+import org.openqa.selenium.support.ui.WebDriverWait;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.By;
+import java.time.Duration;
+
+public class XeokitCanvasAutomation {
+    private WebDriver driver;
+    private JavascriptExecutor js;
+    private WebDriverWait wait;
+    private String canvasId;
+
+    public XeokitCanvasAutomation(String canvasId) {
+        System.setProperty("webdriver.chrome.driver", "path/to/chromedriver");
+        driver = new ChromeDriver();
+        js = (JavascriptExecutor) driver;
+        wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+        this.canvasId = canvasId;
+    }
+
+    public void loadModel(String url) {
+        driver.get(url);
+        wait.until(ExpectedConditions.presenceOfElementLocated(By.id(canvasId)));
+        // Wait for the model to load (adjust as needed)
+        try {
+            Thread.sleep(5000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private Object executeViewerCommand(String command) {
+        String script = String.format(
+            "var canvas = document.getElementById('%s'); " +
+            "var ctx = canvas.getContext('webgl2'); " +
+            "function findViewer(obj) { " +
+            "  for (let prop in obj) { " +
+            "    if (obj[prop] && typeof obj[prop] === 'object' && obj[prop].scene && obj[prop].camera) { " +
+            "      return obj[prop]; " +
+            "    } " +
+            "  } " +
+            "  for (let prop in obj) { " +
+            "    if (obj[prop] && typeof obj[prop] === 'object') { " +
+            "      const result = findViewer(obj[prop]); " +
+            "      if (result) return result; " +
+            "    } " +
+            "  } " +
+            "  return null; " +
+            "} " +
+            "var viewer = canvas.xeokit || canvas.__xeokit_viewer__ || findViewer(window); " +
+            "if (!viewer) { throw new Error('Viewer not found'); } " +
+            "return %s;", canvasId, command);
+        return js.executeScript(script);
+    }
+
+    public void rotateCamera(double x, double y, double z) {
+        executeViewerCommand(String.format("viewer.camera.orbit([%f, %f, %f])", x, y, z));
+    }
+
+    public void zoomCamera(double factor) {
+        executeViewerCommand(String.format("viewer.camera.zoom(viewer.camera.eye, %f)", factor));
+    }
+
+    public void toggleObjectVisibility(String objectId) {
+        executeViewerCommand(String.format(
+            "var obj = viewer.scene.objects['%s']; " +
+            "if (obj) { obj.visible = !obj.visible; }",
+            objectId
+        ));
+    }
+
+    public void highlightObject(String objectId) {
+        executeViewerCommand(String.format(
+            "var obj = viewer.scene.objects['%s']; " +
+            "if (obj) { viewer.scene.setObjectsHighlighted([obj], true); }",
+            objectId
+        ));
+    }
+
+    public String getObjectInfo(String objectId) {
+        return (String) executeViewerCommand(String.format(
+            "var obj = viewer.scene.objects['%s']; " +
+            "return obj ? JSON.stringify({id: obj.id, visible: obj.visible, position: obj.position}) : 'Object not found';",
+            objectId
+        ));
+    }
+
+    public void close() {
+        driver.quit();
+    }
+
+    public static void main(String[] args) {
+        XeokitCanvasAutomation automation = new XeokitCanvasAutomation("your-canvas-id");
+        try {
+            automation.loadModel("https://your-xeokit-model-page.com");
+            automation.rotateCamera(45, 0, 0);
+            automation.zoomCamera(1.5);
+            automation.toggleObjectVisibility("object1");
+            automation.highlightObject("object2");
+            String objectInfo = automation.getObjectInfo("object3");
+            System.out.println(objectInfo);
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            automation.close();
+        }
+    }
+}
+```
+
+Key changes:
+
+1. We now get the WebGL2 context in our JavaScript.
+2. We try multiple methods to find the viewer: directly on the canvas, as a property of the canvas, and by searching the window object.
+3. If we can't find the viewer, we throw an error.
+
+If you're still encountering issues, it would be helpful to know:
+
+1. What does `console.log(ctx)` show in the Chrome console?
+2. Are there any global variables or functions related to your xeokit setup that you can see in the console?
+3. Do you have access to the JavaScript code that initializes the xeokit viewer?
+
+With this information, we can further refine our approach to match your specific xeokit setup.
