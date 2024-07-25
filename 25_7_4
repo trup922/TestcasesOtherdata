@@ -1,0 +1,154 @@
+Thank you for providing that information. It's helpful to know that you're able to access the WebGL program. The fact that you're seeing the WebGLProgram object suggests that we're on the right track, but we need to adjust our approach to work with xeokit's specific implementation.
+
+Since direct manipulation of WebGL uniforms isn't working as expected, let's try a different approach. Instead of trying to manipulate the WebGL context directly, we'll attempt to find and use xeokit's API methods, which should be safer and more reliable.
+
+Here's a revised version of the code that attempts to locate and use xeokit's methods:
+
+```java
+import org.openqa.selenium.*;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.support.ui.WebDriverWait;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import java.time.Duration;
+
+public class XeokitCanvasAutomation {
+    private WebDriver driver;
+    private JavascriptExecutor js;
+    private WebDriverWait wait;
+
+    public XeokitCanvasAutomation() {
+        System.setProperty("webdriver.chrome.driver", "path/to/chromedriver");
+        driver = new ChromeDriver();
+        js = (JavascriptExecutor) driver;
+        wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+    }
+
+    public void loadModel(String url) {
+        driver.get(url);
+        wait.until(ExpectedConditions.presenceOfElementLocated(By.tagName("canvas")));
+        try {
+            Thread.sleep(5000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private Object executeViewerCommand(String command) {
+        String script = 
+            "var viewer; " +
+            "function findViewer(obj) { " +
+            "    if (obj && obj.scene && obj.camera && typeof obj.scene.canvas === 'object') return obj; " +
+            "    for (var key in obj) { " +
+            "        if (obj.hasOwnProperty(key) && typeof obj[key] === 'object') { " +
+            "            var found = findViewer(obj[key]); " +
+            "            if (found) return found; " +
+            "        } " +
+            "    } " +
+            "    return null; " +
+            "} " +
+            "viewer = findViewer(window); " +
+            "if (!viewer) throw new Error('Xeokit viewer not found'); " +
+            "return " + command + ";";
+        return js.executeScript(script);
+    }
+
+    public void rotateCamera(double x, double y, double z) {
+        executeViewerCommand(String.format("viewer.camera.orbit([%f, %f, %f])", x, y, z));
+    }
+
+    public void zoomCamera(double factor) {
+        executeViewerCommand(String.format("viewer.camera.zoom(viewer.camera.eye, %f)", factor));
+    }
+
+    public void toggleObjectVisibility(String objectId) {
+        executeViewerCommand(String.format(
+            "var obj = viewer.scene.objects['%s']; " +
+            "if (obj) { obj.visible = !obj.visible; }",
+            objectId
+        ));
+    }
+
+    public void highlightObject(String objectId) {
+        executeViewerCommand(String.format(
+            "var obj = viewer.scene.objects['%s']; " +
+            "if (obj) { viewer.scene.setObjectsHighlighted([obj], true); }",
+            objectId
+        ));
+    }
+
+    public String getObjectInfo(String objectId) {
+        return (String) executeViewerCommand(String.format(
+            "var obj = viewer.scene.objects['%s']; " +
+            "return obj ? JSON.stringify({id: obj.id, visible: obj.visible, position: obj.position}) : 'Object not found';",
+            objectId
+        ));
+    }
+
+    public void close() {
+        driver.quit();
+    }
+
+    public static void main(String[] args) {
+        XeokitCanvasAutomation automation = new XeokitCanvasAutomation();
+        try {
+            automation.loadModel("https://your-xeokit-model-page.com");
+            automation.rotateCamera(45, 0, 0);
+            automation.zoomCamera(1.5);
+            automation.toggleObjectVisibility("object1");
+            automation.highlightObject("object2");
+            String objectInfo = automation.getObjectInfo("object3");
+            System.out.println(objectInfo);
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            automation.close();
+        }
+    }
+}
+```
+
+Key changes:
+
+1. We've implemented a recursive `findViewer` function that searches for an object with `scene` and `camera` properties, which should be characteristics of the xeokit viewer.
+
+2. We're now using xeokit's API methods (like `camera.orbit()` and `camera.zoom()`) instead of trying to manipulate WebGL uniforms directly.
+
+3. The `executeViewerCommand` method now searches for the viewer object before executing commands.
+
+To troubleshoot further:
+
+1. Try running parts of the JavaScript directly in the browser console:
+
+```javascript
+function findViewer(obj) {
+    if (obj && obj.scene && obj.camera && typeof obj.scene.canvas === 'object') return obj;
+    for (var key in obj) {
+        if (obj.hasOwnProperty(key) && typeof obj[key] === 'object') {
+            var found = findViewer(obj[key]);
+            if (found) return found;
+        }
+    }
+    return null;
+}
+var viewer = findViewer(window);
+console.log(viewer);
+
+// If viewer is found, try these:
+viewer.camera.orbit([45, 0, 0]);
+viewer.camera.zoom(viewer.camera.eye, 1.5);
+```
+
+2. If the viewer is still not found, it might be initialized asynchronously or stored in a different scope. In this case, you might need to:
+
+   a. Add a wait mechanism to ensure the viewer is fully loaded before interacting with it.
+   b. Inject a script into the page that can access the viewer in its local scope.
+   c. Modify the xeokit initialization code to expose the viewer globally.
+
+3. Check the browser's console for any error messages that might provide clues about what's going wrong.
+
+If you're still having trouble, could you provide more details about:
+1. How is xeokit typically initialized in your application?
+2. Are there any specific JavaScript functions or methods you normally use to interact with the 3D model?
+3. Can you share any relevant parts of the HTML or JavaScript code from your application?
+
+This information would help us tailor the solution more precisely to your specific setup.
