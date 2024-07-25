@@ -1,0 +1,158 @@
+I apologize for the inconvenience. The "maximum call stack size exceeded" error suggests that our recursive function to find the viewer is going too deep, likely due to circular references in the object structure. Let's modify our approach to avoid this issue.
+
+We'll implement a non-recursive method to search for the viewer and add a depth limit to prevent excessive searching. Here's an updated version of the code:
+
+```java
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.JavascriptExecutor;
+import org.openqa.selenium.support.ui.WebDriverWait;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.By;
+import java.time.Duration;
+
+public class XeokitCanvasAutomation {
+    private WebDriver driver;
+    private JavascriptExecutor js;
+    private WebDriverWait wait;
+    private String canvasId;
+
+    public XeokitCanvasAutomation(String canvasId) {
+        System.setProperty("webdriver.chrome.driver", "path/to/chromedriver");
+        driver = new ChromeDriver();
+        js = (JavascriptExecutor) driver;
+        wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+        this.canvasId = canvasId;
+    }
+
+    public void loadModel(String url) {
+        driver.get(url);
+        wait.until(ExpectedConditions.presenceOfElementLocated(By.id(canvasId)));
+        // Wait for the model to load (adjust as needed)
+        try {
+            Thread.sleep(5000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private Object executeViewerCommand(String command) {
+        String script = String.format(
+            "var canvas = document.getElementById('%s'); " +
+            "var ctx = canvas.getContext('webgl2'); " +
+            "function findViewer() { " +
+            "  var queue = [window]; " +
+            "  var visited = new WeakSet(); " +
+            "  while (queue.length > 0) { " +
+            "    var obj = queue.shift(); " +
+            "    if (visited.has(obj)) continue; " +
+            "    visited.add(obj); " +
+            "    if (obj && typeof obj === 'object' && obj.scene && obj.camera) { " +
+            "      return obj; " +
+            "    } " +
+            "    for (var prop in obj) { " +
+            "      if (obj[prop] && typeof obj[prop] === 'object' && !visited.has(obj[prop])) { " +
+            "        queue.push(obj[prop]); " +
+            "      } " +
+            "    } " +
+            "    if (queue.length > 1000) break; // Depth limit " +
+            "  } " +
+            "  return null; " +
+            "} " +
+            "var viewer = canvas.xeokit || canvas.__xeokit_viewer__ || findViewer(); " +
+            "if (!viewer) { throw new Error('Viewer not found'); } " +
+            "return %s;", canvasId, command);
+        return js.executeScript(script);
+    }
+
+    public void rotateCamera(double x, double y, double z) {
+        executeViewerCommand(String.format("viewer.camera.orbit([%f, %f, %f])", x, y, z));
+    }
+
+    public void zoomCamera(double factor) {
+        executeViewerCommand(String.format("viewer.camera.zoom(viewer.camera.eye, %f)", factor));
+    }
+
+    public void toggleObjectVisibility(String objectId) {
+        executeViewerCommand(String.format(
+            "var obj = viewer.scene.objects['%s']; " +
+            "if (obj) { obj.visible = !obj.visible; }",
+            objectId
+        ));
+    }
+
+    public void highlightObject(String objectId) {
+        executeViewerCommand(String.format(
+            "var obj = viewer.scene.objects['%s']; " +
+            "if (obj) { viewer.scene.setObjectsHighlighted([obj], true); }",
+            objectId
+        ));
+    }
+
+    public String getObjectInfo(String objectId) {
+        return (String) executeViewerCommand(String.format(
+            "var obj = viewer.scene.objects['%s']; " +
+            "return obj ? JSON.stringify({id: obj.id, visible: obj.visible, position: obj.position}) : 'Object not found';",
+            objectId
+        ));
+    }
+
+    public void close() {
+        driver.quit();
+    }
+
+    public static void main(String[] args) {
+        XeokitCanvasAutomation automation = new XeokitCanvasAutomation("your-canvas-id");
+        try {
+            automation.loadModel("https://your-xeokit-model-page.com");
+            automation.rotateCamera(45, 0, 0);
+            automation.zoomCamera(1.5);
+            automation.toggleObjectVisibility("object1");
+            automation.highlightObject("object2");
+            String objectInfo = automation.getObjectInfo("object3");
+            System.out.println(objectInfo);
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            automation.close();
+        }
+    }
+}
+```
+
+Key changes:
+
+1. We've replaced the recursive `findViewer` function with an iterative breadth-first search.
+2. We use a `WeakSet` to keep track of visited objects to avoid circular references.
+3. We've added a depth limit (1000 iterations) to prevent excessive searching.
+
+If you're still encountering issues, it would be helpful to try some diagnostic steps directly in the browser's console:
+
+1. Check if the canvas is accessible:
+   ```javascript
+   var canvas = document.getElementById('your-canvas-id');
+   console.log(canvas);
+   ```
+
+2. Verify the WebGL2 context:
+   ```javascript
+   var ctx = canvas.getContext('webgl2');
+   console.log(ctx);
+   ```
+
+3. Look for the viewer on the canvas:
+   ```javascript
+   console.log(canvas.xeokit);
+   console.log(canvas.__xeokit_viewer__);
+   ```
+
+4. Search for viewer-like objects in the window:
+   ```javascript
+   for (var prop in window) {
+     if (window[prop] && typeof window[prop] === 'object' && window[prop].scene && window[prop].camera) {
+       console.log("Potential viewer found:", prop, window[prop]);
+     }
+   }
+   ```
+
+These steps can help us understand how the xeokit viewer is structured in your specific setup. If you can share the results of these console commands, or any relevant parts of the xeokit initialization code, we can further refine our approach to match your exact setup.
