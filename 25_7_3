@@ -1,0 +1,197 @@
+Thank you for that information. If the global variables are also undefined, it suggests that the xeokit viewer might be encapsulated within a closure or a module, making it not directly accessible from the global scope. Let's try a different approach.
+
+Given that we know the WebGL2 context is being used, we can try to interact with the canvas directly. Here's a revised strategy:
+
+1. First, let's modify our JavaScript to find the active WebGL2 canvas:
+
+```java
+private WebElement findActiveCanvas() {
+    String script = 
+        "var canvases = document.getElementsByTagName('canvas'); " +
+        "for (var i = 0; i < canvases.length; i++) { " +
+        "    var canvas = canvases[i]; " +
+        "    var context = canvas.getContext('webgl2'); " +
+        "    if (context && context.getParameter(context.CURRENT_PROGRAM)) { " +
+        "        return canvas; " +
+        "    } " +
+        "} " +
+        "return null;";
+    
+    WebElement canvas = (WebElement) js.executeScript(script);
+    if (canvas == null) {
+        throw new RuntimeException("No active WebGL2 canvas found");
+    }
+    return canvas;
+}
+```
+
+2. Now, let's create a method to execute commands on this canvas:
+
+```java
+private Object executeCanvasCommand(String command) {
+    WebElement canvas = findActiveCanvas();
+    String script = 
+        "var canvas = arguments[0]; " +
+        "var ctx = canvas.getContext('webgl2'); " +
+        command;
+    return js.executeScript(script, canvas);
+}
+```
+
+3. We can then create methods to interact with the 3D scene:
+
+```java
+public void rotateCamera(double x, double y, double z) {
+    String command = String.format(
+        "ctx.uniform3f(ctx.getUniformLocation(ctx.getParameter(ctx.CURRENT_PROGRAM), 'uRotation'), %f, %f, %f);",
+        x, y, z
+    );
+    executeCanvasCommand(command);
+}
+
+public void zoomCamera(double factor) {
+    String command = String.format(
+        "ctx.uniform1f(ctx.getUniformLocation(ctx.getParameter(ctx.CURRENT_PROGRAM), 'uZoom'), %f);",
+        factor
+    );
+    executeCanvasCommand(command);
+}
+
+public void toggleObjectVisibility(String objectId) {
+    // This might be more complex and depend on how objects are managed in your shader
+    String command = String.format(
+        "var location = ctx.getUniformLocation(ctx.getParameter(ctx.CURRENT_PROGRAM), 'uObjectVisibility[%s]'); " +
+        "if (location) { " +
+        "    var currentVisibility = ctx.getUniform(ctx.getParameter(ctx.CURRENT_PROGRAM), location); " +
+        "    ctx.uniform1i(location, currentVisibility === 1 ? 0 : 1); " +
+        "}",
+        objectId
+    );
+    executeCanvasCommand(command);
+}
+```
+
+Here's the full updated class:
+
+```java
+import org.openqa.selenium.*;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.support.ui.WebDriverWait;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import java.time.Duration;
+
+public class XeokitCanvasAutomation {
+    private WebDriver driver;
+    private JavascriptExecutor js;
+    private WebDriverWait wait;
+
+    public XeokitCanvasAutomation() {
+        System.setProperty("webdriver.chrome.driver", "path/to/chromedriver");
+        driver = new ChromeDriver();
+        js = (JavascriptExecutor) driver;
+        wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+    }
+
+    public void loadModel(String url) {
+        driver.get(url);
+        wait.until(ExpectedConditions.presenceOfElementLocated(By.tagName("canvas")));
+        try {
+            Thread.sleep(5000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private WebElement findActiveCanvas() {
+        String script = 
+            "var canvases = document.getElementsByTagName('canvas'); " +
+            "for (var i = 0; i < canvases.length; i++) { " +
+            "    var canvas = canvases[i]; " +
+            "    var context = canvas.getContext('webgl2'); " +
+            "    if (context && context.getParameter(context.CURRENT_PROGRAM)) { " +
+            "        return canvas; " +
+            "    } " +
+            "} " +
+            "return null;";
+        
+        WebElement canvas = (WebElement) js.executeScript(script);
+        if (canvas == null) {
+            throw new RuntimeException("No active WebGL2 canvas found");
+        }
+        return canvas;
+    }
+
+    private Object executeCanvasCommand(String command) {
+        WebElement canvas = findActiveCanvas();
+        String script = 
+            "var canvas = arguments[0]; " +
+            "var ctx = canvas.getContext('webgl2'); " +
+            command;
+        return js.executeScript(script, canvas);
+    }
+
+    public void rotateCamera(double x, double y, double z) {
+        String command = String.format(
+            "ctx.uniform3f(ctx.getUniformLocation(ctx.getParameter(ctx.CURRENT_PROGRAM), 'uRotation'), %f, %f, %f);",
+            x, y, z
+        );
+        executeCanvasCommand(command);
+    }
+
+    public void zoomCamera(double factor) {
+        String command = String.format(
+            "ctx.uniform1f(ctx.getUniformLocation(ctx.getParameter(ctx.CURRENT_PROGRAM), 'uZoom'), %f);",
+            factor
+        );
+        executeCanvasCommand(command);
+    }
+
+    public void toggleObjectVisibility(String objectId) {
+        String command = String.format(
+            "var location = ctx.getUniformLocation(ctx.getParameter(ctx.CURRENT_PROGRAM), 'uObjectVisibility[%s]'); " +
+            "if (location) { " +
+            "    var currentVisibility = ctx.getUniform(ctx.getParameter(ctx.CURRENT_PROGRAM), location); " +
+            "    ctx.uniform1i(location, currentVisibility === 1 ? 0 : 1); " +
+            "}",
+            objectId
+        );
+        executeCanvasCommand(command);
+    }
+
+    public void close() {
+        driver.quit();
+    }
+
+    public static void main(String[] args) {
+        XeokitCanvasAutomation automation = new XeokitCanvasAutomation();
+        try {
+            automation.loadModel("https://your-xeokit-model-page.com");
+            automation.rotateCamera(45, 0, 0);
+            automation.zoomCamera(1.5);
+            automation.toggleObjectVisibility("object1");
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            automation.close();
+        }
+    }
+}
+```
+
+This approach interacts directly with the WebGL2 context, bypassing the need to access the xeokit viewer object. However, please note:
+
+1. This is a low-level approach and may not work exactly as intended without knowing the specifics of your shader programs and how xeokit is managing the scene.
+
+2. The uniform names ('uRotation', 'uZoom', 'uObjectVisibility') are examples and may need to be adjusted based on your actual shader code.
+
+3. This method assumes that the relevant uniforms exist in your shader program. If they don't, you may need to modify the shaders or find alternative ways to affect the rendering.
+
+4. Some operations (like highlighting objects) may be more complex to implement this way and might require more detailed knowledge of the rendering pipeline.
+
+If this approach doesn't work or if you need more specific interactions, we might need to explore other options, such as:
+
+1. Injecting a script into the page that can access the encapsulated xeokit viewer.
+2. Using browser developer tools to analyze the JavaScript and find where and how the viewer is being stored and accessed.
+3. Modifying the xeokit initialization code to expose the viewer object globally.
+
+Could you provide any additional information about how the xeokit viewer is typically used in your application? Are there any specific API calls or methods you usually use to interact with it?
