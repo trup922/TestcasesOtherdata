@@ -1,0 +1,82 @@
+Based on the code you've shared and your current implementation using Shutterbug, here's how you can integrate the perceptual hashing approach:
+
+1. First, modify your `verifyImagesUsingShtterbug` method to return a `BufferedImage` instead of a boolean:
+
+```java
+public BufferedImage verifyImagesUsingShtterbug(String imagePath, String saveDifferencesToPath,
+                                                double expectedDeviation) {
+    try {
+        return Shutterbug.shootPage(driver).getImage();
+    } catch (IOException e) {
+        e.printStackTrace();
+        return null;
+    }
+}
+```
+
+2. Create a new method to compare images using perceptual hashing:
+
+```java
+import com.github.kilianB.hash.Hash;
+import com.github.kilianB.hashAlgorithms.PerceptiveHash;
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+
+public boolean compareImagesUsingPerceptualHash(BufferedImage capturedImage, String baseImagePath, double threshold) {
+    try {
+        BufferedImage baseImage = ImageIO.read(new File(baseImagePath));
+        
+        PerceptiveHash pHash = new PerceptiveHash(32);
+        Hash hash1 = pHash.hash(capturedImage);
+        Hash hash2 = pHash.hash(baseImage);
+        
+        double similarity = 1 - hash1.normalizedHammingDistance(hash2);
+        return similarity >= threshold;
+    } catch (IOException e) {
+        e.printStackTrace();
+        return false;
+    }
+}
+```
+
+3. Now, modify your `verifyOrthographicProjection` and `verifyPerspectiveProjection` methods to use this new approach:
+
+```java
+public boolean verifyOrthographicProjection() {
+    click(orthographicButton);
+    sleep(2000);
+    logger.info("Comparing orthographic projection with reference image");
+    BufferedImage capturedImage = verifyImagesUsingShtterbug(EnvPaths.ORTHOGRAPIC_IMAGE_PATH.path,
+                                                             EnvPaths.STORE_DIFF_IMAGE_PATH.path, 0.017);
+    return compareImagesUsingPerceptualHash(capturedImage, EnvPaths.ORTHOGRAPIC_IMAGE_PATH.path, 0.9);
+}
+
+public boolean verifyPerspectiveProjection() {
+    click(perspectiveButton);
+    sleep(2000);
+    logger.info("Comparing perspective projection with reference image");
+    BufferedImage capturedImage = verifyImagesUsingShtterbug(EnvPaths.PERSPECTIVE_IMAGE_PATH.path,
+                                                             EnvPaths.STORE_DIFF_IMAGE_PATH.path, 0.001);
+    return compareImagesUsingPerceptualHash(capturedImage, EnvPaths.PERSPECTIVE_IMAGE_PATH.path, 0.9);
+}
+```
+
+This approach allows you to:
+1. Capture the current state of the page using Shutterbug
+2. Load the reference image from a file
+3. Use perceptual hashing to compare the images
+4. Determine similarity based on a threshold
+
+Remember to add the necessary dependencies to your project for the `JImageHash` library:
+
+```xml
+<dependency>
+    <groupId>com.github.kilianB</groupId>
+    <artifactId>JImageHash</artifactId>
+    <version>3.0.0</version>
+</dependency>
+```
+
+This implementation integrates the perceptual hashing approach with your existing Shutterbug setup, providing a more robust image comparison method that's less sensitive to minor pixel-level differences.
