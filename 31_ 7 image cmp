@@ -1,0 +1,140 @@
+Certainly! I understand you want to store the difference between the images in a screenshot folder before returning false. This is a great practice for debugging and analyzing test failures. Let's modify the code to include this functionality:
+
+```java
+import com.github.kilianB.hash.Hash;
+import com.github.kilianB.hashAlgorithms.AverageHash;
+import com.github.kilianB.hashAlgorithms.PerceptiveHash;
+import com.github.kilianB.hashAlgorithms.DifferenceHash;
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.awt.Graphics2D;
+import java.awt.Color;
+import java.io.File;
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
+public boolean compareImagesUsingPerceptualHash(BufferedImage capturedImage, String baseImagePath, double threshold, String screenshotFolderPath) {
+    try {
+        BufferedImage resizedCaptured = resizeImage(capturedImage, 1920, 1080);
+        BufferedImage baseImage = ImageIO.read(new File(baseImagePath));
+        BufferedImage resizedBase = resizeImage(baseImage, 1920, 1080);
+
+        // Initialize hash algorithms
+        AverageHash aHash = new AverageHash(64);
+        PerceptiveHash pHash = new PerceptiveHash(32);
+        DifferenceHash dHash = new DifferenceHash(64);
+
+        // Compute hashes for both images
+        Hash aHash1 = aHash.hash(resizedCaptured);
+        Hash aHash2 = aHash.hash(resizedBase);
+        Hash pHash1 = pHash.hash(resizedCaptured);
+        Hash pHash2 = pHash.hash(resizedBase);
+        Hash dHash1 = dHash.hash(resizedCaptured);
+        Hash dHash2 = dHash.hash(resizedBase);
+
+        // Calculate similarities
+        double aSimilarity = 1 - aHash1.normalizedHammingDistance(aHash2);
+        double pSimilarity = 1 - pHash1.normalizedHammingDistance(pHash2);
+        double dSimilarity = 1 - dHash1.normalizedHammingDistance(dHash2);
+
+        // Calculate average similarity
+        double avgSimilarity = (aSimilarity + pSimilarity + dSimilarity) / 3;
+
+        Logger.info("AverageHash Similarity: {}", aSimilarity);
+        Logger.info("PerceptiveHash Similarity: {}", pSimilarity);
+        Logger.info("DifferenceHash Similarity: {}", dSimilarity);
+        Logger.info("Average Similarity: {}", avgSimilarity);
+        Logger.info("Threshold: {}", threshold);
+
+        if (avgSimilarity < threshold) {
+            // Generate and save difference image
+            BufferedImage diffImage = generateDifferenceImage(resizedCaptured, resizedBase);
+            saveDifferenceImage(diffImage, screenshotFolderPath);
+            return false;
+        }
+
+        return true;
+    } catch (IOException e) {
+        e.printStackTrace();
+        return false;
+    }
+}
+
+private BufferedImage generateDifferenceImage(BufferedImage img1, BufferedImage img2) {
+    int width = img1.getWidth();
+    int height = img1.getHeight();
+    BufferedImage diffImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+            int rgb1 = img1.getRGB(x, y);
+            int rgb2 = img2.getRGB(x, y);
+            
+            int r1 = (rgb1 >> 16) & 0xff;
+            int g1 = (rgb1 >> 8) & 0xff;
+            int b1 = rgb1 & 0xff;
+            
+            int r2 = (rgb2 >> 16) & 0xff;
+            int g2 = (rgb2 >> 8) & 0xff;
+            int b2 = rgb2 & 0xff;
+            
+            int diff = Math.abs(r1 - r2) + Math.abs(g1 - g2) + Math.abs(b1 - b2);
+            diff = Math.min(255, diff);
+            
+            Color color = new Color(diff, diff, diff);
+            diffImage.setRGB(x, y, color.getRGB());
+        }
+    }
+    
+    return diffImage;
+}
+
+private void saveDifferenceImage(BufferedImage diffImage, String folderPath) throws IOException {
+    File folder = new File(folderPath);
+    if (!folder.exists()) {
+        folder.mkdirs();
+    }
+
+    String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
+    String fileName = "diff_" + timestamp + ".png";
+    File outputFile = new File(folder, fileName);
+
+    ImageIO.write(diffImage, "png", outputFile);
+    Logger.info("Difference image saved: {}", outputFile.getAbsolutePath());
+}
+
+// Make sure you have this resize method
+private BufferedImage resizeImage(BufferedImage originalImage, int targetWidth, int targetHeight) {
+    BufferedImage resizedImage = new BufferedImage(targetWidth, targetHeight, BufferedImage.TYPE_INT_RGB);
+    Graphics2D graphics2D = resizedImage.createGraphics();
+    graphics2D.drawImage(originalImage, 0, 0, targetWidth, targetHeight, null);
+    graphics2D.dispose();
+    return resizedImage;
+}
+```
+
+Now, let's update the `verifyOrthographicProjection1()` method to use this new functionality:
+
+```java
+public boolean verifyOrthographicProjection1() {
+    click(orthographicButton);
+    sleep(2000);
+    Logger.info("Comparing orthographic projection with reference image");
+    
+    // Assuming you have a method to capture the current screen
+    BufferedImage capturedImage = captureScreen();
+    
+    String screenshotFolderPath = "path/to/your/screenshot/folder";
+    return compareImagesUsingPerceptualHash(capturedImage, EnvPaths.ORTHOGRAPIC_IMAGE_PATH.path, 0.85, screenshotFolderPath);
+}
+```
+
+This updated code does the following:
+
+1. If the average similarity is below the threshold, it generates a difference image.
+2. The difference image highlights the areas where the two images differ.
+3. The difference image is saved in the specified screenshot folder with a timestamp in the filename.
+4. The method returns false after saving the difference image.
+
+This approach will help you visualize and analyze the differences between the expected and actual images when a test fails. Make sure to adjust the `screenshotFolderPath` to a suitable location in your project structure.
