@@ -1,0 +1,70 @@
+I apologize for the confusion. You're right to question this, as the cropping method needs to be precise and tailored to your specific images. Let me explain a more robust approach to cropping the building portion, and then we'll implement a solution that allows you to define the region of interest more accurately.
+
+First, let's understand how image coordinates work:
+
+1. The origin (0,0) is at the top-left corner of the image.
+2. X-axis increases from left to right.
+3. Y-axis increases from top to bottom.
+
+Now, let's create a more flexible method to crop the image:
+
+```java
+public class ImageProcessor {
+    // Define the region of interest as percentages of the full image
+    private static final double START_X_PERCENT = 0.3; // 30% from the left
+    private static final double START_Y_PERCENT = 0.1; // 10% from the top
+    private static final double WIDTH_PERCENT = 0.4;   // 40% of the image width
+    private static final double HEIGHT_PERCENT = 0.8;  // 80% of the image height
+
+    public BufferedImage cropBuildingModel(BufferedImage fullImage) {
+        int imageWidth = fullImage.getWidth();
+        int imageHeight = fullImage.getHeight();
+
+        int startX = (int) (imageWidth * START_X_PERCENT);
+        int startY = (int) (imageHeight * START_Y_PERCENT);
+        int width = (int) (imageWidth * WIDTH_PERCENT);
+        int height = (int) (imageHeight * HEIGHT_PERCENT);
+
+        // Ensure we don't exceed image boundaries
+        width = Math.min(width, imageWidth - startX);
+        height = Math.min(height, imageHeight - startY);
+
+        return fullImage.getSubimage(startX, startY, width, height);
+    }
+
+    // ... other methods ...
+}
+```
+
+This approach does the following:
+
+1. Defines the region of interest using percentages of the full image dimensions. This makes it more adaptable to different image sizes.
+2. Calculates the actual pixel values based on these percentages.
+3. Ensures that the cropping region doesn't exceed the image boundaries.
+
+To use this effectively:
+
+1. Analyze your reference image carefully. You can use an image editing tool to determine where the building is located in terms of percentages of the full image dimensions.
+
+2. Adjust the percentage constants (START_X_PERCENT, START_Y_PERCENT, WIDTH_PERCENT, HEIGHT_PERCENT) based on your analysis. For example, if the building starts 30% from the left edge of the image and takes up 40% of the image width, you'd set START_X_PERCENT to 0.3 and WIDTH_PERCENT to 0.4.
+
+3. Test with different images to ensure the cropping works consistently.
+
+Here's how you can test and fine-tune this:
+
+```java
+public class ImageCropTester {
+    public static void main(String[] args) throws IOException {
+        ImageProcessor processor = new ImageProcessor();
+        BufferedImage fullImage = ImageIO.read(new File("path/to/your/image.png"));
+        BufferedImage croppedImage = processor.cropBuildingModel(fullImage);
+        
+        // Save the cropped image to inspect it
+        ImageIO.write(croppedImage, "png", new File("path/to/save/cropped_image.png"));
+    }
+}
+```
+
+Run this with different images and adjust the percentage constants until you consistently get the desired portion of the building in your cropped images.
+
+This method provides a more flexible and understandable way to crop your images, and it should be easier to adjust for your specific needs. Remember, the key is to analyze your images and set those percentage constants to accurately capture the building across different screenshots.
