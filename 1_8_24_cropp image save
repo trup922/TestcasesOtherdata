@@ -1,0 +1,88 @@
+Certainly! I'll provide you with a modified version of the code that crops the images and stores them in a screenshots folder. Here's how you can implement this:
+
+```java
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
+public class ImageProcessor {
+
+    private static final String SCREENSHOT_FOLDER = "path/to/your/screenshots/folder/";
+
+    public BufferedImage cropAndSaveBuilding(BufferedImage fullImage, String imageName) throws IOException {
+        // Crop the image
+        BufferedImage croppedImage = cropBuildingModel(fullImage);
+        
+        // Save the cropped image
+        saveImage(croppedImage, imageName);
+        
+        return croppedImage;
+    }
+
+    private BufferedImage cropBuildingModel(BufferedImage fullImage) {
+        // Adjust these values based on the exact position of the building in your images
+        int x = fullImage.getWidth() / 3;  // Approximate start of the building from left
+        int y = fullImage.getHeight() / 6;  // Approximate start of the building from top
+        int width = fullImage.getWidth() / 2;  // Approximate width of the building
+        int height = 2 * fullImage.getHeight() / 3;  // Approximate height of the building
+        
+        return fullImage.getSubimage(x, y, width, height);
+    }
+
+    private void saveImage(BufferedImage image, String baseName) throws IOException {
+        File folder = new File(SCREENSHOT_FOLDER);
+        if (!folder.exists()) {
+            folder.mkdirs();
+        }
+
+        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
+        String fileName = baseName + "_" + timestamp + ".png";
+        File outputFile = new File(folder, fileName);
+
+        ImageIO.write(image, "png", outputFile);
+        System.out.println("Cropped image saved: " + outputFile.getAbsolutePath());
+    }
+
+    public boolean compareBuildings(BufferedImage referenceImage, BufferedImage capturedImage, double threshold) throws IOException {
+        BufferedImage croppedReference = cropAndSaveBuilding(referenceImage, "reference");
+        BufferedImage croppedCaptured = cropAndSaveBuilding(capturedImage, "captured");
+        
+        // Perform image comparison using JImageHash as before
+        // ...
+
+        return avgSimilarity >= threshold;
+    }
+}
+```
+
+Now, let's update the `verifyBuildingModel` method to use this new functionality:
+
+```java
+public boolean verifyBuildingModel() throws IOException {
+    BufferedImage referenceImage = ImageIO.read(new File("path/to/reference/image.png"));
+    BufferedImage capturedImage = Shutterbug.shootPage(driver, ScrollStrategy.VIEWPORT_ONLY).getImage();
+    
+    ImageProcessor processor = new ImageProcessor();
+    return processor.compareBuildings(referenceImage, capturedImage, 0.85);  // Adjust threshold as needed
+}
+```
+
+This updated code does the following:
+
+1. Creates a new `ImageProcessor` class to handle image operations.
+2. Implements a `cropAndSaveBuilding` method that crops the image and saves it to the screenshots folder.
+3. Uses a timestamp in the filename to ensure unique names for each saved image.
+4. Saves both the cropped reference image and the cropped captured image.
+5. The `compareBuildings` method now crops and saves both images before comparison.
+
+Make sure to replace `"path/to/your/screenshots/folder/"` with the actual path where you want to store the screenshots.
+
+This approach will:
+1. Crop the building model from both the reference and captured images.
+2. Save these cropped images in your designated screenshots folder with unique, timestamped filenames.
+3. Perform the comparison on these cropped images.
+
+This will allow you to visually inspect the cropped images that are being compared, which can be very helpful for debugging and verification purposes. The saved images will show exactly what portions of the full screenshots are being used for comparison.
