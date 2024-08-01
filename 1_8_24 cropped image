@@ -1,0 +1,75 @@
+I understand you want to focus on comparing just the building model part of these images using JImageHash. Here's an approach to accomplish this:
+
+1. Extract the region of interest (ROI):
+First, we need to crop the images to focus only on the building model. Since the building's position seems consistent across images, we can define a fixed rectangle for cropping.
+
+```java
+public BufferedImage cropBuildingModel(BufferedImage fullImage) {
+    // Adjust these values based on the exact position of the building in your images
+    int x = fullImage.getWidth() / 3;  // Approximate start of the building from left
+    int y = fullImage.getHeight() / 6;  // Approximate start of the building from top
+    int width = fullImage.getWidth() / 2;  // Approximate width of the building
+    int height = 2 * fullImage.getHeight() / 3;  // Approximate height of the building
+    
+    return fullImage.getSubimage(x, y, width, height);
+}
+```
+
+2. Compare the cropped images using JImageHash:
+
+```java
+import com.github.kilianB.hash.Hash;
+import com.github.kilianB.hashAlgorithms.PerceptiveHash;
+import com.github.kilianB.hashAlgorithms.AverageHash;
+import com.github.kilianB.hashAlgorithms.DifferenceHash;
+
+public boolean compareBuildings(BufferedImage referenceImage, BufferedImage capturedImage, double threshold) {
+    BufferedImage croppedReference = cropBuildingModel(referenceImage);
+    BufferedImage croppedCaptured = cropBuildingModel(capturedImage);
+    
+    PerceptiveHash pHash = new PerceptiveHash(32);
+    AverageHash aHash = new AverageHash(64);
+    DifferenceHash dHash = new DifferenceHash(64);
+    
+    Hash pHash1 = pHash.hash(croppedReference);
+    Hash pHash2 = pHash.hash(croppedCaptured);
+    Hash aHash1 = aHash.hash(croppedReference);
+    Hash aHash2 = aHash.hash(croppedCaptured);
+    Hash dHash1 = dHash.hash(croppedReference);
+    Hash dHash2 = dHash.hash(croppedCaptured);
+    
+    double pSimilarity = 1 - pHash1.normalizedHammingDistance(pHash2);
+    double aSimilarity = 1 - aHash1.normalizedHammingDistance(aHash2);
+    double dSimilarity = 1 - dHash1.normalizedHammingDistance(dHash2);
+    
+    double avgSimilarity = (pSimilarity + aSimilarity + dSimilarity) / 3;
+    
+    Logger.info("Perceptive Hash Similarity: {}", pSimilarity);
+    Logger.info("Average Hash Similarity: {}", aSimilarity);
+    Logger.info("Difference Hash Similarity: {}", dSimilarity);
+    Logger.info("Average Similarity: {}", avgSimilarity);
+    
+    return avgSimilarity >= threshold;
+}
+```
+
+3. Use this method in your test:
+
+```java
+public boolean verifyBuildingModel() {
+    BufferedImage referenceImage = ImageIO.read(new File("path/to/reference/image.png"));
+    BufferedImage capturedImage = Shutterbug.shootPage(driver, ScrollStrategy.VIEWPORT_ONLY).getImage();
+    
+    return compareBuildings(referenceImage, capturedImage, 0.85);  // Adjust threshold as needed
+}
+```
+
+This approach:
+1. Crops both the reference and captured images to focus on the building model.
+2. Uses three different hash algorithms for comparison, which can help account for different types of visual changes.
+3. Calculates an average similarity across the three methods.
+4. Allows you to set a threshold for determining if the images are similar enough.
+
+You may need to fine-tune the cropping rectangle and similarity threshold based on your specific images and requirements. Also, ensure you have proper error handling and logging in place.
+
+Remember, this method assumes the building is consistently positioned in your images. If its position can vary significantly, you might need to implement a more sophisticated method to locate the building within the image before cropping.
