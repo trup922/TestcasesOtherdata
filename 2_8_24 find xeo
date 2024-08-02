@@ -1,4 +1,4 @@
-Thank you for that information. If U5 is returning the Window object, we need to look deeper into the code structure to find the xeokit viewer instance. Given the complex module system hinted at in the code, the viewer might be encapsulated within a closure or a module. Let's try some more targeted approaches:
+TTThank you for that information. If U5 is returning the Window object, we need to look deeper into the code structure to find the xeokit viewer instance. Given the complex module system hinted at in the code, the viewer might be encapsulated within a closure or a module. Let's try some more targeted approaches:
 
 1. Examine global functions:
    ```javascript
@@ -252,3 +252,84 @@ console.log('Potential interaction functions:', potentialFunctions);
 ```
 
 If you find any promising leads or observe any changes in the 3D model after trying these steps, please let me know. We can then focus on the specific areas that seem to be controlling the xeokit viewer and develop more targeted strategies for interaction.
+
+
+_---------------
+Thank you for sharing this information. From the image, we can see that the canvas has React-related properties, which suggests that the application is using React to manage the xeokit viewer. This is valuable information for our approach.
+
+Given that we're dealing with a React application, the xeokit viewer instance is likely managed within a React component's state or context. Direct access to the viewer might be challenging, but we can try a few React-specific approaches:
+
+1. Access React Fiber nodes:
+   ```javascript
+   const reactInternals = Object.keys(canvas).find(key => key.startsWith('__reactInternalInstance$'));
+   const fiber = canvas[reactInternals];
+   console.log('React Fiber:', fiber);
+   ```
+
+2. Traverse the React component tree:
+   ```javascript
+   function findReactComponent(fiber) {
+     let node = fiber;
+     while (node) {
+       const stateNode = node.stateNode;
+       if (stateNode && stateNode.viewer) {
+         console.log('Potential xeokit viewer found:', stateNode.viewer);
+         return stateNode.viewer;
+       }
+       if (node.child) {
+         node = node.child;
+       } else if (node.sibling) {
+         node = node.sibling;
+       } else {
+         while (node && !node.sibling) {
+           node = node.return;
+         }
+         node = node ? node.sibling : null;
+       }
+     }
+     return null;
+   }
+   
+   const viewer = findReactComponent(fiber);
+   console.log('Xeokit viewer:', viewer);
+   ```
+
+3. Look for custom events that might be used to communicate with the xeokit viewer:
+   ```javascript
+   const originalAddEventListener = EventTarget.prototype.addEventListener;
+   EventTarget.prototype.addEventListener = function(type, listener, options) {
+     console.log('Event listener added:', type);
+     return originalAddEventListener.call(this, type, listener, options);
+   };
+   ```
+
+4. Check for any global React components that might be wrapping the xeokit viewer:
+   ```javascript
+   console.log('React components:', Object.keys(window).filter(key => key.startsWith('React') || key.endsWith('Component')));
+   ```
+
+5. Look for any custom hooks or context providers that might be managing the xeokit viewer:
+   ```javascript
+   console.log('Custom hooks:', Object.keys(window).filter(key => key.startsWith('use') && typeof window[key] === 'function'));
+   console.log('Context providers:', Object.keys(window).filter(key => key.endsWith('Provider') && typeof window[key] === 'function'));
+   ```
+
+6. Try to trigger a re-render of the component and observe changes:
+   ```javascript
+   const event = new Event('resize');
+   window.dispatchEvent(event);
+   ```
+
+7. Look for any global store (e.g., Redux) that might be holding the viewer state:
+   ```javascript
+   console.log('Redux store:', window.store);
+   console.log('Global state:', window.__REDUX_STATE__);
+   ```
+
+If none of these approaches yield direct access to the xeokit viewer, you might need to consider interacting with it indirectly:
+
+1. Simulate user interactions on the canvas (mouse events, touch events).
+2. Look for any exposed API methods on the global scope that might interact with the viewer.
+3. Consider using browser extension development tools to inject scripts that can access the React component tree more directly.
+
+Let me know if any of these approaches reveal useful information about the xeokit viewer, or if you need further guidance based on what you find.
