@@ -1,0 +1,78 @@
+Thank you for that information. If U5 is returning the Window object, we need to look deeper into the code structure to find the xeokit viewer instance. Given the complex module system hinted at in the code, the viewer might be encapsulated within a closure or a module. Let's try some more targeted approaches:
+
+1. Examine global functions:
+   ```javascript
+   console.log(Object.keys(window).filter(key => typeof window[key] === 'function'));
+   ```
+   Look for any functions that might be related to xeokit or the viewer.
+
+2. Check for properties on the Window object that might be xeokit-related:
+   ```javascript
+   console.log(Object.keys(window).filter(key => 
+     key.toLowerCase().includes('xeokit') || 
+     key.toLowerCase().includes('viewer') ||
+     key.toLowerCase().includes('model') ||
+     key.toLowerCase().includes('scene')
+   ));
+   ```
+
+3. Look for any objects that have xeokit-like methods:
+   ```javascript
+   Object.keys(window).forEach(key => {
+     if (typeof window[key] === 'object' && window[key] !== null) {
+       const methods = Object.keys(window[key]).filter(method => 
+         method.toLowerCase().includes('camera') ||
+         method.toLowerCase().includes('scene') ||
+         method.toLowerCase().includes('model') ||
+         method.toLowerCase().includes('render')
+       );
+       if (methods.length > 0) {
+         console.log(`Potential xeokit object found: ${key}`, methods);
+       }
+     }
+   });
+   ```
+
+4. Search for canvas elements and their parent containers:
+   ```javascript
+   const canvases = document.querySelectorAll('canvas');
+   canvases.forEach(canvas => {
+     console.log('Canvas:', canvas);
+     console.log('Canvas parent:', canvas.parentElement);
+   });
+   ```
+
+5. Look for any custom attributes on HTML elements that might be related to xeokit:
+   ```javascript
+   const elementsWithCustomAttrs = document.querySelectorAll('*[data-xeokit], *[data-viewer]');
+   console.log('Elements with custom xeokit attributes:', elementsWithCustomAttrs);
+   ```
+
+6. Check for any AMD or CommonJS module definitions:
+   ```javascript
+   if (typeof define === 'function' && define.amd) {
+     console.log('AMD modules detected');
+   }
+   if (typeof module === 'object' && module.exports) {
+     console.log('CommonJS modules detected');
+   }
+   ```
+
+7. Look for any immediately invoked function expressions (IIFEs) that might contain the viewer:
+   ```javascript
+   Object.keys(window).forEach(key => {
+     if (typeof window[key] === 'object' && window[key] !== null) {
+       const iifeMethods = Object.keys(window[key]).filter(method => 
+         typeof window[key][method] === 'function' && 
+         window[key][method].toString().includes('function')
+       );
+       if (iifeMethods.length > 0) {
+         console.log(`Potential IIFE found: ${key}`, iifeMethods);
+       }
+     }
+   });
+   ```
+
+After trying these approaches, look for any output that seems related to xeokit or 3D rendering. The viewer instance might be nested within one of these objects or accessible through a method call.
+
+If you find any promising leads, let me know, and we can explore further how to interact with the viewer based on its actual location in the code structure.
