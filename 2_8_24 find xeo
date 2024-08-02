@@ -153,3 +153,102 @@ If none of these approaches yield results, the xeokit viewer might be deeply nes
 3. Look for any network requests that might be loading xeokit-related resources.
 
 Let me know if any of these approaches reveal something useful, or if you need further guidance based on what you find.
+
+Thank you for providing that information. It's helpful to know that the canvas ID is "main-viewer" and it's using WebGL2. Let's focus on this canvas and try to interact with the xeokit viewer through it. Here are some steps and code snippets you can try in the browser console:
+
+1. Get a reference to the canvas:
+
+```javascript
+const canvas = document.getElementById('main-viewer');
+console.log('Canvas:', canvas);
+```
+
+2. Get the WebGL2 context:
+
+```javascript
+const gl = canvas.getContext('webgl2');
+console.log('WebGL2 context:', gl);
+```
+
+3. Look for xeokit-related properties on the canvas or its parent elements:
+
+```javascript
+let element = canvas;
+while (element) {
+    console.log('Element:', element);
+    console.log('xeokit properties:', Object.keys(element).filter(key => key.toLowerCase().includes('xeokit')));
+    element = element.parentElement;
+}
+```
+
+4. Check for any custom properties that might hold the viewer instance:
+
+```javascript
+console.log('Canvas properties:', Object.getOwnPropertyNames(canvas).filter(prop => typeof canvas[prop] === 'object' && canvas[prop] !== null));
+```
+
+5. Look for any xeokit-related event listeners on the canvas:
+
+```javascript
+const listeners = getEventListeners(canvas);
+console.log('Canvas event listeners:', listeners);
+```
+
+6. Try to find the viewer instance through the canvas:
+
+```javascript
+function findXeokitViewer(obj) {
+    if (obj && typeof obj === 'object') {
+        if (obj.scene && obj.camera && obj.model) {
+            console.log('Potential xeokit viewer found:', obj);
+            return obj;
+        }
+        for (let key in obj) {
+            const result = findXeokitViewer(obj[key]);
+            if (result) return result;
+        }
+    }
+    return null;
+}
+
+const potentialViewer = findXeokitViewer(canvas);
+console.log('Potential xeokit viewer:', potentialViewer);
+```
+
+7. If the viewer is not directly accessible, you might need to trigger some actions and observe the results. For example, try to rotate or zoom the model:
+
+```javascript
+canvas.dispatchEvent(new MouseEvent('mousedown', {
+    bubbles: true,
+    cancelable: true,
+    view: window,
+    clientX: canvas.width / 2,
+    clientY: canvas.height / 2
+}));
+
+canvas.dispatchEvent(new MouseEvent('mousemove', {
+    bubbles: true,
+    cancelable: true,
+    view: window,
+    clientX: (canvas.width / 2) + 100,
+    clientY: (canvas.height / 2) + 100
+}));
+
+canvas.dispatchEvent(new MouseEvent('mouseup', {
+    bubbles: true,
+    cancelable: true,
+    view: window
+}));
+```
+
+8. Check for any global functions that might be used to interact with the viewer:
+
+```javascript
+const potentialFunctions = Object.keys(window).filter(key => 
+    typeof window[key] === 'function' && 
+    (key.toLowerCase().includes('viewer') || key.toLowerCase().includes('model') || key.toLowerCase().includes('scene'))
+);
+console.log('Potential interaction functions:', potentialFunctions);
+```
+
+If you find any promising leads or observe any changes in the 3D model after trying these steps, please let me know. We can then focus on the specific areas that seem to be controlling the xeokit viewer and develop more targeted strategies for interaction.
