@@ -456,3 +456,124 @@ I understand your frustration. It seems the xeokit viewer is very well encapsula
 By implementing these monitoring techniques, you should be able to observe how the application interacts with the 3D model, even if you can't directly access the xeokit API. This information can help you understand the flow of data and events, which you can then use to indirectly interact with or automate the 3D viewer.
 
 Let me know what you observe after implementing these monitoring techniques, and we can refine our approach based on the results.
+
+
+
+
+
+
+
+I understand your frustration. It seems the xeokit viewer is very well encapsulated within the React application, making it challenging to access directly. Given this situation, let's try a different approach focused on indirect interaction and observation.
+
+1. Monitor Event Listeners:
+   Since you mentioned event listeners are being printed, let's focus on that:
+
+   ```javascript
+   const originalAddEventListener = EventTarget.prototype.addEventListener;
+   EventTarget.prototype.addEventListener = function(type, listener, options) {
+     console.log('Event listener added:', type, this);
+     return originalAddEventListener.call(this, type, listener, options);
+   };
+   ```
+
+   Watch for any events that seem related to 3D interactions or model manipulation.
+
+2. Observe Network Requests:
+   The viewer might be making API calls to load or update the model:
+
+   ```javascript
+   const originalFetch = window.fetch;
+   window.fetch = function(...args) {
+     console.log('Fetch request:', args[0]);
+     return originalFetch.apply(this, args);
+   };
+
+   const originalXHROpen = XMLHttpRequest.prototype.open;
+   XMLHttpRequest.prototype.open = function(...args) {
+     console.log('XHR request:', args[1]);
+     return originalXHROpen.apply(this, args);
+   };
+   ```
+
+3. Monitor State Changes:
+   React might be using a state management library. Let's try to detect state changes:
+
+   ```javascript
+   let lastState = JSON.stringify(window.__REDUX_STATE__ || {});
+   setInterval(() => {
+     const currentState = JSON.stringify(window.__REDUX_STATE__ || {});
+     if (currentState !== lastState) {
+       console.log('State changed');
+       lastState = currentState;
+     }
+   }, 1000);
+   ```
+
+4. Simulate User Interactions:
+   Try to trigger actions on the canvas and observe what happens:
+
+   ```javascript
+   const canvas = document.getElementById('main-viewer');
+   
+   function simulateMouseEvent(type, x, y) {
+     const event = new MouseEvent(type, {
+       view: window,
+       bubbles: true,
+       cancelable: true,
+       clientX: x,
+       clientY: y
+     });
+     canvas.dispatchEvent(event);
+   }
+
+   // Simulate a click
+   simulateMouseEvent('mousedown', canvas.width / 2, canvas.height / 2);
+   simulateMouseEvent('mouseup', canvas.width / 2, canvas.height / 2);
+
+   // Simulate a drag
+   simulateMouseEvent('mousedown', canvas.width / 2, canvas.height / 2);
+   simulateMouseEvent('mousemove', canvas.width / 2 + 100, canvas.height / 2 + 100);
+   simulateMouseEvent('mouseup', canvas.width / 2 + 100, canvas.height / 2 + 100);
+   ```
+
+5. Look for Exposed Methods:
+   Search for any methods that might be indirectly interacting with the viewer:
+
+   ```javascript
+   Object.keys(window).forEach(key => {
+     if (typeof window[key] === 'function') {
+       const funcStr = window[key].toString().toLowerCase();
+       if (funcStr.includes('canvas') || funcStr.includes('3d') || funcStr.includes('model')) {
+         console.log('Potential viewer-related function:', key);
+       }
+     }
+   });
+   ```
+
+6. Monitor WebGL Calls:
+   Intercept WebGL calls to understand what's happening in the rendering pipeline:
+
+   ```javascript
+   const originalGetContext = HTMLCanvasElement.prototype.getContext;
+   HTMLCanvasElement.prototype.getContext = function(...args) {
+     const context = originalGetContext.apply(this, args);
+     if (args[0] === 'webgl' || args[0] === 'webgl2') {
+       const originalFunctions = {};
+       ['drawArrays', 'drawElements'].forEach(func => {
+         originalFunctions[func] = context[func];
+         context[func] = function(...args) {
+           console.log(`WebGL call: ${func}`, args);
+           return originalFunctions[func].apply(this, args);
+         };
+       });
+     }
+     return context;
+   };
+   ```
+
+7. React DevTools:
+   If possible, install React DevTools in your browser. This will allow you to inspect the React component tree and potentially find the component managing the xeokit viewer.
+
+By implementing these monitoring techniques, you should be able to observe how the application interacts with the 3D model, even if you can't directly access the xeokit API. This information can help you understand the flow of data and events, which you can then use to indirectly interact with or automate the 3D viewer.
+
+Let me know what you observe after implementing these monitoring techniques, and we can refine our approach based on the results.
