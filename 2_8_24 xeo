@@ -1,0 +1,108 @@
+I understand your frustration. If we're still unable to directly access the xeokit viewer, we'll need to take a more indirect approach. Let's try some alternative methods to interact with or observe the 3D viewer:
+
+1. Monitor WebGL context calls:
+   ```javascript
+   const originalGetContext = HTMLCanvasElement.prototype.getContext;
+   HTMLCanvasElement.prototype.getContext = function() {
+     const context = originalGetContext.apply(this, arguments);
+     if (arguments[0] === 'webgl' || arguments[0] === 'webgl2') {
+       console.log('WebGL context acquired');
+       // Monitor key WebGL calls
+       ['drawArrays', 'drawElements', 'clear'].forEach(method => {
+         const original = context[method];
+         context[method] = function() {
+           console.log(`WebGL ${method} called`);
+           return original.apply(this, arguments);
+         };
+       });
+     }
+     return context;
+   };
+   ```
+
+2. Track canvas rendering:
+   ```javascript
+   const canvas = document.getElementById('main-viewer');
+   if (canvas) {
+     const observer = new MutationObserver(() => {
+       console.log('Canvas updated');
+     });
+     observer.observe(canvas, { attributes: true, attributeFilter: ['width', 'height'] });
+   }
+   ```
+
+3. Monitor for specific DOM changes that might indicate model loading or viewer state changes:
+   ```javascript
+   const observer = new MutationObserver((mutations) => {
+     mutations.forEach((mutation) => {
+       if (mutation.type === 'childList') {
+         mutation.addedNodes.forEach((node) => {
+           if (node.nodeType === Node.ELEMENT_NODE && (node.classList.contains('xeokit-related-class') || node.id.includes('xeokit'))) {
+             console.log('Xeokit-related element added:', node);
+           }
+         });
+       }
+     });
+   });
+   observer.observe(document.body, { childList: true, subtree: true });
+   ```
+
+4. Intercept network requests that might be loading 3D model data:
+   ```javascript
+   const originalFetch = window.fetch;
+   window.fetch = function() {
+     console.log('Fetch request:', arguments[0]);
+     return originalFetch.apply(this, arguments);
+   };
+
+   const originalXHROpen = XMLHttpRequest.prototype.open;
+   XMLHttpRequest.prototype.open = function() {
+     console.log('XHR request:', arguments[1]);
+     return originalXHROpen.apply(this, arguments);
+   };
+   ```
+
+5. Try to interact with the canvas using simulated mouse events:
+   ```javascript
+   function simulateCanvasInteraction() {
+     const canvas = document.getElementById('main-viewer');
+     if (!canvas) return;
+
+     const rect = canvas.getBoundingClientRect();
+     const events = [
+       new MouseEvent('mousedown', { clientX: rect.left + 10, clientY: rect.top + 10 }),
+       new MouseEvent('mousemove', { clientX: rect.left + 50, clientY: rect.top + 50 }),
+       new MouseEvent('mouseup', { clientX: rect.left + 50, clientY: rect.top + 50 })
+     ];
+
+     events.forEach(event => canvas.dispatchEvent(event));
+     console.log('Canvas interaction simulated');
+   }
+
+   // Call this function after a short delay to ensure the viewer is loaded
+   setTimeout(simulateCanvasInteraction, 5000);
+   ```
+
+6. Look for any custom events that might be triggered by the viewer:
+   ```javascript
+   const originalDispatchEvent = EventTarget.prototype.dispatchEvent;
+   EventTarget.prototype.dispatchEvent = function(event) {
+     if (event.type.includes('xeokit') || event.type.includes('viewer') || event.type.includes('3d')) {
+       console.log('Custom event dispatched:', event.type);
+     }
+     return originalDispatchEvent.call(this, event);
+   };
+   ```
+
+7. Check for any postMessage communications that might be used for viewer interactions:
+   ```javascript
+   window.addEventListener('message', (event) => {
+     console.log('PostMessage received:', event.data);
+   }, false);
+   ```
+
+These methods focus on observing and interacting with the 3D viewer indirectly. By monitoring WebGL calls, canvas updates, DOM changes, network requests, and simulating user interactions, we might be able to deduce how the viewer operates and find ways to programmatically control it.
+
+After implementing these monitoring techniques, try interacting with the 3D viewer manually (e.g., rotating, zooming) and observe the console output. This might reveal patterns or specific function calls that we can use to automate interactions.
+
+If you notice any particular patterns or interesting outputs after implementing these methods, please let me know, and we can further refine our approach based on those observations.
