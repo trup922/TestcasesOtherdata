@@ -76,3 +76,80 @@ Thank you for that information. If U5 is returning the Window object, we need to
 After trying these approaches, look for any output that seems related to xeokit or 3D rendering. The viewer instance might be nested within one of these objects or accessible through a method call.
 
 If you find any promising leads, let me know, and we can explore further how to interact with the viewer based on its actual location in the code structure.
+
+
+
+Thank you for sharing the results. It appears that the search for Immediately Invoked Function Expressions (IIFEs) has revealed several potential objects, but none of them seem to be directly related to xeokit or 3D rendering. The objects found are mostly related to browser window functionality and some compression utilities (pako).
+
+Given this information, we need to take a different approach. The xeokit viewer might be encapsulated in a way that's not easily discoverable through global objects. Here are some next steps we can try:
+
+1. Search for xeokit-specific canvas elements:
+   ```javascript
+   const xeokitCanvas = document.querySelector('canvas[id^="xeokit-canvas-"]');
+   console.log('Xeokit canvas:', xeokitCanvas);
+   ```
+
+2. Look for custom data attributes that might be used by xeokit:
+   ```javascript
+   const xeokitElements = document.querySelectorAll('[data-xeokit]');
+   console.log('Elements with xeokit data attributes:', xeokitElements);
+   ```
+
+3. Check for any global functions that might be xeokit-related:
+   ```javascript
+   const xeokitFunctions = Object.keys(window).filter(key => 
+     typeof window[key] === 'function' && 
+     (key.toLowerCase().includes('xeokit') || key.toLowerCase().includes('viewer') || key.toLowerCase().includes('model'))
+   );
+   console.log('Potential xeokit functions:', xeokitFunctions);
+   ```
+
+4. Look for any objects with xeokit-like properties:
+   ```javascript
+   const xeokitObjects = Object.keys(window).filter(key => 
+     typeof window[key] === 'object' && window[key] !== null &&
+     (
+       window[key].hasOwnProperty('scene') ||
+       window[key].hasOwnProperty('camera') ||
+       window[key].hasOwnProperty('model') ||
+       window[key].hasOwnProperty('viewer')
+     )
+   );
+   console.log('Potential xeokit objects:', xeokitObjects);
+   ```
+
+5. Check for any event listeners that might be related to xeokit:
+   ```javascript
+   const originalAddEventListener = EventTarget.prototype.addEventListener;
+   EventTarget.prototype.addEventListener = function(type, listener, options) {
+     if (type.includes('xeokit') || type.includes('viewer') || type.includes('model')) {
+       console.log('Xeokit-related event listener:', type);
+     }
+     return originalAddEventListener.call(this, type, listener, options);
+   };
+   ```
+
+6. Look for any React or Angular components that might be wrapping the xeokit viewer:
+   ```javascript
+   console.log('React:', window.React);
+   console.log('Angular:', window.ng);
+   ```
+
+7. Check for any WebGL contexts that might be used by xeokit:
+   ```javascript
+   const canvases = document.querySelectorAll('canvas');
+   canvases.forEach(canvas => {
+     const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+     if (gl) {
+       console.log('WebGL canvas found:', canvas);
+     }
+   });
+   ```
+
+If none of these approaches yield results, the xeokit viewer might be deeply nested within a closure or module system. In that case, you might need to:
+
+1. Set breakpoints in the JavaScript debugger where you know the 3D model is being manipulated.
+2. Use the debugger to step through the code and inspect variables.
+3. Look for any network requests that might be loading xeokit-related resources.
+
+Let me know if any of these approaches reveal something useful, or if you need further guidance based on what you find.
