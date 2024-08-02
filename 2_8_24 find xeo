@@ -674,3 +674,93 @@ Given this information, here are some approaches we can take to interact with th
 These approaches allow you to programmatically interact with the viewer and monitor its behavior without direct access to the xeokit API. You can combine these methods to create more complex interactions or to automate specific workflows within the 3D viewer.
 
 Let me know if you'd like to focus on any specific interaction or if you need more detailed guidance on implementing these approaches!
+
+
+
+
+Thank you for sharing this information. This gives us a clearer picture of the application structure. Let's analyze the key points:
+
+1. The application is called "Virtual Design & Construction".
+2. There's a cache busting mechanism for loading scripts.
+3. The main configuration is loaded from 'static/js/config.js'.
+4. There are two important JavaScript files:
+   - /vdc-collaboration/pako.min.js
+   - /vdc-collaboration/assets/index-BYRqJKEB.js (This is likely the main application file)
+5. There's a CSS file: /vdc-collaboration/assets/index-DaG4c6fY.css
+
+Given this structure, here are some approaches we can take to interact with or analyze the xeokit viewer:
+
+1. Examine the config.js file:
+   ```javascript
+   fetch('/static/js/config.js')
+     .then(response => response.text())
+     .then(text => {
+       console.log('Config file contents:', text);
+       // Look for any xeokit or viewer-related configurations
+     });
+   ```
+
+2. Analyze the main application file:
+   ```javascript
+   fetch('/vdc-collaboration/assets/index-BYRqJKEB.js')
+     .then(response => response.text())
+     .then(text => {
+       console.log('Main app file size:', text.length);
+       // Look for xeokit-related functions or objects
+       const xeokitMatches = text.match(/xeokit/g);
+       console.log('xeokit mentions:', xeokitMatches ? xeokitMatches.length : 0);
+     });
+   ```
+
+3. Check for global objects or functions after scripts are loaded:
+   ```javascript
+   setTimeout(() => {
+     console.log('Global objects:', Object.keys(window).filter(key => !key.startsWith('_')));
+     console.log('Global functions:', Object.keys(window).filter(key => typeof window[key] === 'function'));
+   }, 5000);  // Wait for 5 seconds to ensure scripts are loaded
+   ```
+
+4. Look for xeokit-specific objects:
+   ```javascript
+   setTimeout(() => {
+     const xeokitObjects = Object.keys(window).filter(key => 
+       key.toLowerCase().includes('xeokit') || 
+       (typeof window[key] === 'object' && window[key] && window[key].scene && window[key].camera)
+     );
+     console.log('Potential xeokit objects:', xeokitObjects);
+   }, 5000);
+   ```
+
+5. Monitor for dynamic script additions:
+   ```javascript
+   const originalCreateElement = document.createElement;
+   document.createElement = function(tagName) {
+     const element = originalCreateElement.call(document, tagName);
+     if (tagName.toLowerCase() === 'script') {
+       console.log('New script element created:', element);
+     }
+     return element;
+   };
+   ```
+
+6. Check for any xeokit-related event listeners:
+   ```javascript
+   const originalAddEventListener = EventTarget.prototype.addEventListener;
+   EventTarget.prototype.addEventListener = function(type, listener, options) {
+     if (this === document.getElementById('main-viewer') || type.toLowerCase().includes('xeokit')) {
+       console.log('Xeokit-related event listener added:', type, this);
+     }
+     return originalAddEventListener.call(this, type, listener, options);
+   };
+   ```
+
+7. Investigate the pako.min.js file (it's likely used for compression):
+   ```javascript
+   if (window.pako) {
+     console.log('Pako library functions:', Object.keys(window.pako));
+   }
+   ```
+
+These approaches should help you gain more insight into how the xeokit viewer is implemented and potentially find ways to interact with it. Remember to run these scripts in the browser console after the page has fully loaded.
+
+Let me know if you discover anything interesting using these methods or if you need further guidance!
