@@ -126,3 +126,109 @@ except Exception as e:
 ```
 
 If these approaches don't work, it might be necessary to inspect the application's source code or consult with the developers to understand the exact structure and how to interact with the 3D model programmatically.
+
+
+Certainly! Running code in the browser console is a great way to explore the application and find available methods. Here are some code snippets you can try in the browser console to investigate the structure of the application and find useful methods:
+
+1. Find the canvas element:
+
+```javascript
+var canvas = document.querySelector('canvas');
+console.log(canvas);
+```
+
+2. Look for a global scene object:
+
+```javascript
+console.log(window.scene);
+```
+
+3. Search for objects that might contain the scene or canvas:
+
+```javascript
+Object.keys(window).forEach(key => {
+    if (window[key] && typeof window[key] === 'object' && (window[key].canvas || window[key].scene)) {
+        console.log('Potential scene object found:', key, window[key]);
+    }
+});
+```
+
+4. If you find a scene object, explore its properties and methods:
+
+```javascript
+// Replace 'scene' with the actual object name if different
+console.log('Properties:', Object.keys(scene));
+console.log('Methods:', Object.getOwnPropertyNames(Object.getPrototypeOf(scene)).filter(method => typeof scene[method] === 'function'));
+```
+
+5. Check for xeokit-specific properties:
+
+```javascript
+Object.keys(window).forEach(key => {
+    if (window[key] && typeof window[key] === 'object' && window[key].xeokit) {
+        console.log('xeokit object found:', key, window[key]);
+    }
+});
+```
+
+6. Look for a viewer object:
+
+```javascript
+Object.keys(window).forEach(key => {
+    if (window[key] && typeof window[key] === 'object' && window[key].scene && window[key].camera) {
+        console.log('Potential viewer object found:', key, window[key]);
+    }
+});
+```
+
+7. If you find a viewer object, explore its methods:
+
+```javascript
+// Replace 'viewer' with the actual object name
+console.log('Viewer methods:', Object.getOwnPropertyNames(Object.getPrototypeOf(viewer)).filter(method => typeof viewer[method] === 'function'));
+```
+
+8. Check for model-related methods:
+
+```javascript
+// Replace 'viewer' or 'scene' with the actual object name
+['loadModel', 'unloadModel', 'getModel', 'getModels', 'setModelVisible', 'getModelAABB'].forEach(methodName => {
+    if (typeof viewer[methodName] === 'function') {
+        console.log('Found method:', methodName);
+    }
+});
+```
+
+9. Look for camera-related methods:
+
+```javascript
+// Replace 'viewer' or 'scene' with the actual object name
+['getCamera', 'setCameraPosition', 'setCameraTarget', 'getCameraPosition', 'getCameraTarget'].forEach(methodName => {
+    if (typeof viewer[methodName] === 'function') {
+        console.log('Found camera method:', methodName);
+    }
+});
+```
+
+10. Check for navigation methods:
+
+```javascript
+// Replace 'viewer' with the actual object name
+['setViewFitDuration', 'setViewFitFOV', 'viewFit', 'flyTo'].forEach(methodName => {
+    if (typeof viewer[methodName] === 'function') {
+        console.log('Found navigation method:', methodName);
+    }
+});
+```
+
+Run these snippets in the browser console while your 3D application is open. They will help you discover the structure of the application and find methods that you can potentially use for automation.
+
+Once you find useful objects or methods, you can experiment with them directly in the console. For example, if you find a `viewFit` method, you could try:
+
+```javascript
+viewer.viewFit();
+```
+
+Remember to replace `viewer` with the actual object name you discover.
+
+After you've identified the correct objects and methods, you can then use this information to construct your Selenium scripts, using `driver.execute_script()` to call these methods or access these objects.
