@@ -232,3 +232,94 @@ viewer.viewFit();
 Remember to replace `viewer` with the actual object name you discover.
 
 After you've identified the correct objects and methods, you can then use this information to construct your Selenium scripts, using `driver.execute_script()` to call these methods or access these objects.
+
+
+
+
+
+
+
+Certainly! Here's the JavaScript code you can run directly in your browser's console to interact with the 3D viewer based on the methods and properties we saw in the image:
+
+1. To find the viewer object (you may need to adjust this based on how it's actually named in your application):
+
+```javascript
+function findViewer() {
+    return Object.values(window).find(obj => 
+        obj && typeof obj === 'object' && 
+        obj._scene && obj._scene.camera &&
+        typeof obj.getRTCViewMatrix === 'function'
+    );
+}
+
+var viewer = findViewer();
+console.log('Viewer object:', viewer);
+```
+
+2. To access and log the camera position:
+
+```javascript
+if (viewer && viewer._scene && viewer._scene.camera) {
+    console.log('Camera position:', viewer._scene.camera.eye);
+    console.log('Camera look at:', viewer._scene.camera.look);
+    console.log('Camera up vector:', viewer._scene.camera.up);
+}
+```
+
+3. To change the camera view:
+
+```javascript
+if (viewer && viewer._scene && viewer._scene.camera) {
+    viewer._scene.camera.eye = [10, 10, 10];
+    viewer._scene.camera.look = [0, 0, 0];
+    viewer._scene.camera.up = [0, 1, 0];
+    // You might need to call a method to update the view, like:
+    // viewer._scene.camera.update();
+    console.log('Camera view changed');
+}
+```
+
+4. To use the picking functionality (if available):
+
+```javascript
+if (viewer && typeof viewer.pick === 'function') {
+    var pickResult = viewer.pick({
+        canvasPos: [100, 100]  // Example canvas coordinates
+    });
+    console.log('Picked object:', pickResult);
+}
+```
+
+5. To access snap picking properties:
+
+```javascript
+if (viewer) {
+    console.log('Snap pick layer number:', viewer.snapPickLayerNumber);
+    console.log('Snap pick coordinate scale:', viewer.snapPickCoordinateScale);
+    console.log('Snap pick origin:', viewer.snapPickOrigin);
+}
+```
+
+6. To use the getRTCViewMatrix method:
+
+```javascript
+if (viewer && typeof viewer.getRTCViewMatrix === 'function') {
+    var matrix = viewer.getRTCViewMatrix('someId', [0, 0, 0]);
+    console.log('RTC View Matrix:', matrix);
+}
+```
+
+7. To explore available methods on the viewer object:
+
+```javascript
+if (viewer) {
+    console.log('Viewer methods:', 
+        Object.getOwnPropertyNames(Object.getPrototypeOf(viewer))
+            .filter(method => typeof viewer[method] === 'function')
+    );
+}
+```
+
+Remember to run the first snippet to find and assign the viewer object before running the other snippets. You may need to adjust the property and method names based on the actual implementation in your application.
+
+These console commands will help you explore and interact with the 3D viewer directly in the browser. Once you've confirmed which methods work and how to use them, you can then translate these into Selenium commands using Python's `driver.execute_script()` method.
