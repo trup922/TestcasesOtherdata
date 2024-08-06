@@ -323,3 +323,136 @@ if (viewer) {
 Remember to run the first snippet to find and assign the viewer object before running the other snippets. You may need to adjust the property and method names based on the actual implementation in your application.
 
 These console commands will help you explore and interact with the 3D viewer directly in the browser. Once you've confirmed which methods work and how to use them, you can then translate these into Selenium commands using Python's `driver.execute_script()` method.
+
+
+
+
+I apologize for the confusion. If the viewer object is undefined, it means we need to dig deeper to find the correct object. Let's try a more comprehensive approach to locate the relevant objects and methods. Here are some console commands you can run to explore the application structure:
+
+1. Search for objects with 3D-related properties:
+
+```javascript
+function findRelevantObjects() {
+    return Object.keys(window).filter(key => {
+        const obj = window[key];
+        return obj && typeof obj === 'object' && (
+            obj.scene || 
+            obj.camera || 
+            obj.canvas ||
+            (obj._scene && obj._scene.camera) ||
+            typeof obj.getRTCViewMatrix === 'function' ||
+            typeof obj.pick === 'function'
+        );
+    });
+}
+
+var relevantObjects = findRelevantObjects();
+console.log('Potentially relevant objects:', relevantObjects);
+
+relevantObjects.forEach(key => {
+    console.log(`\nExploring object: ${key}`);
+    console.log('Properties:', Object.keys(window[key]));
+    console.log('Methods:', 
+        Object.getOwnPropertyNames(Object.getPrototypeOf(window[key]))
+            .filter(method => typeof window[key][method] === 'function')
+    );
+});
+```
+
+2. Look for canvas elements, which are often used for 3D rendering:
+
+```javascript
+var canvases = document.querySelectorAll('canvas');
+console.log('Canvas elements found:', canvases.length);
+canvases.forEach((canvas, index) => {
+    console.log(`Canvas ${index}:`, canvas);
+    console.log('Canvas properties:', Object.keys(canvas));
+});
+```
+
+3. Search for objects with specific methods we saw in the image:
+
+```javascript
+function findObjectsWithMethods(methodNames) {
+    return Object.keys(window).filter(key => {
+        const obj = window[key];
+        return obj && typeof obj === 'object' && 
+            methodNames.some(method => typeof obj[method] === 'function');
+    });
+}
+
+var methodNames = ['getRTCViewMatrix', 'getRTCPickViewMatrix', 'getNewMat'];
+var objectsWithMethods = findObjectsWithMethods(methodNames);
+console.log('Objects with specific methods:', objectsWithMethods);
+
+objectsWithMethods.forEach(key => {
+    console.log(`\nExploring object: ${key}`);
+    console.log('Methods found:', 
+        methodNames.filter(method => typeof window[key][method] === 'function')
+    );
+});
+```
+
+4. Look for objects with the properties we saw in the image:
+
+```javascript
+function findObjectsWithProperties(propertyNames) {
+    return Object.keys(window).filter(key => {
+        const obj = window[key];
+        return obj && typeof obj === 'object' && 
+            propertyNames.some(prop => prop in obj);
+    });
+}
+
+var propertyNames = ['snapPickLayerParams', 'snapPickLayerNumber', 'snapPickCoordinateScale', 'snapPickOrigin'];
+var objectsWithProperties = findObjectsWithProperties(propertyNames);
+console.log('Objects with specific properties:', objectsWithProperties);
+
+objectsWithProperties.forEach(key => {
+    console.log(`\nExploring object: ${key}`);
+    console.log('Properties found:', 
+        propertyNames.filter(prop => prop in window[key])
+    );
+});
+```
+
+5. If you find any promising objects, explore them further:
+
+```javascript
+function exploreObject(obj, name = 'Object') {
+    console.log(`\nExploring ${name}:`);
+    console.log('Properties:', Object.keys(obj));
+    console.log('Methods:', 
+        Object.getOwnPropertyNames(Object.getPrototypeOf(obj))
+            .filter(method => typeof obj[method] === 'function')
+    );
+    
+    if (obj.scene || obj._scene) {
+        console.log('Scene found, exploring further:');
+        exploreObject(obj.scene || obj._scene, 'Scene');
+    }
+    
+    if (obj.camera || (obj._scene && obj._scene.camera)) {
+        console.log('Camera found, exploring further:');
+        exploreObject(obj.camera || obj._scene.camera, 'Camera');
+    }
+}
+
+// Replace 'promisingObjectName' with any object name you found from previous searches
+exploreObject(window.promisingObjectName, 'PromisingObject');
+```
+
+Run these scripts in the console one by one. They will help you identify objects that might be related to the 3D viewer, even if they're not named exactly as we expected.
+
+Once you find objects with relevant properties or methods, you can start interacting with them. For example, if you find an object with a `camera` property:
+
+```javascript
+var viewerObject = window.promisingObjectName;  // Replace with the actual object name you found
+if (viewerObject && viewerObject.camera) {
+    console.log('Camera position:', viewerObject.camera.position);
+    viewerObject.camera.position.set(10, 10, 10);  // This syntax might vary
+    console.log('New camera position:', viewerObject.camera.position);
+}
+```
+
+Remember, the exact structure and method names might be different in your specific implementation. These scripts are designed to help you explore and find the correct objects and methods to interact with.
