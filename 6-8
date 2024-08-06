@@ -687,3 +687,167 @@ if (viewer && viewer.scene && viewer.scene.canvas) {
 These scripts should help you explore and interact with the xeokit viewer, even if it's not globally exposed. Run them in the console and see what information you can gather. Once you find the correct paths to access the viewer and its components, you can use this information to construct your Selenium commands using `driver.execute_script()`.
 
 Remember, the exact structure might vary depending on how the application has implemented and configured xeokit. You may need to adjust these scripts based on what you find in your specific implementation.
+
+
+
+
+
+I apologize for the continued difficulty. If we're still not able to find the viewer object directly, we'll need to take a more comprehensive approach. Let's try to inspect the entire window object and look for any properties that might be related to the 3D viewer or xeokit. Here's a series of console commands to help us dive deeper:
+
+1. Inspect all global variables:
+
+```javascript
+function inspectGlobalScope() {
+    const globals = Object.keys(window).filter(key => {
+        try {
+            return window[key] && typeof window[key] === 'object';
+        } catch (e) {
+            return false;
+        }
+    });
+
+    console.log('Potential global objects:', globals);
+
+    globals.forEach(key => {
+        try {
+            const obj = window[key];
+            const hasCanvas = obj.canvas || (obj.scene && obj.scene.canvas);
+            const hasCamera = obj.camera || (obj.scene && obj.scene.camera);
+            const has3DMethods = typeof obj.loadModel === 'function' || typeof obj.viewFit === 'function';
+
+            if (hasCanvas || hasCamera || has3DMethods) {
+                console.log(`\nPromising object found: ${key}`);
+                console.log('Properties:', Object.keys(obj));
+                console.log('Methods:', Object.getOwnPropertyNames(Object.getPrototypeOf(obj))
+                    .filter(method => typeof obj[method] === 'function'));
+            }
+        } catch (e) {
+            // Ignore errors
+        }
+    });
+}
+
+inspectGlobalScope();
+```
+
+2. Search for xeokit-related strings:
+
+```javascript
+function searchForXeokitStrings() {
+    const xeokitKeywords = ['xeokit', 'viewer', 'scene', 'camera', 'model', '3d'];
+    const results = {};
+
+    Object.keys(window).forEach(key => {
+        try {
+            const stringified = JSON.stringify(window[key]);
+            xeokitKeywords.forEach(keyword => {
+                if (stringified.toLowerCase().includes(keyword)) {
+                    if (!results[key]) results[key] = [];
+                    results[key].push(keyword);
+                }
+            });
+        } catch (e) {
+            // Ignore errors
+        }
+    });
+
+    console.log('Objects containing xeokit-related strings:', results);
+}
+
+searchForXeokitStrings();
+```
+
+3. Look for canvas elements and their parent objects:
+
+```javascript
+function findCanvasAndParents() {
+    const canvases = Array.from(document.querySelectorAll('canvas'));
+    console.log('Canvas elements found:', canvases.length);
+
+    canvases.forEach((canvas, index) => {
+        console.log(`\nCanvas ${index}:`, canvas);
+        let parent = canvas.parentElement;
+        let depth = 0;
+        while (parent && depth < 5) {
+            console.log(`Parent at depth ${depth}:`, parent);
+            if (parent.id) console.log('Parent ID:', parent.id);
+            if (parent.className) console.log('Parent Class:', parent.className);
+            parent = parent.parentElement;
+            depth++;
+        }
+    });
+}
+
+findCanvasAndParents();
+```
+
+4. Search for objects with specific xeokit method names:
+
+```javascript
+function findObjectsWithXeokitMethods() {
+    const methodNames = ['loadModel', 'viewFit', 'scene', 'camera', 'plugins'];
+    const results = {};
+
+    function searchObject(obj, path = '') {
+        if (obj && typeof obj === 'object') {
+            methodNames.forEach(method => {
+                if (obj[method] && (typeof obj[method] === 'function' || typeof obj[method] === 'object')) {
+                    if (!results[path]) results[path] = [];
+                    results[path].push(method);
+                }
+            });
+
+            Object.keys(obj).forEach(key => {
+                if (obj[key] && typeof obj[key] === 'object') {
+                    searchObject(obj[key], path ? `${path}.${key}` : key);
+                }
+            });
+        }
+    }
+
+    searchObject(window);
+    console.log('Objects with xeokit-like methods:', results);
+}
+
+findObjectsWithXeokitMethods();
+```
+
+5. If you find any promising objects, explore them further:
+
+```javascript
+function exploreObject(path) {
+    const parts = path.split('.');
+    let obj = window;
+    for (const part of parts) {
+        obj = obj[part];
+        if (!obj) break;
+    }
+
+    if (obj) {
+        console.log(`\nExploring object at path: ${path}`);
+        console.log('Properties:', Object.keys(obj));
+        console.log('Methods:', Object.getOwnPropertyNames(Object.getPrototypeOf(obj))
+            .filter(method => typeof obj[method] === 'function'));
+        
+        if (obj.scene) {
+            console.log('\nScene properties:', Object.keys(obj.scene));
+        }
+        if (obj.camera || (obj.scene && obj.scene.camera)) {
+            const camera = obj.camera || obj.scene.camera;
+            console.log('\nCamera properties:', Object.keys(camera));
+        }
+    } else {
+        console.log(`Object not found at path: ${path}`);
+    }
+}
+
+// Use this function with paths you find from the previous searches
+// For example:
+// exploreObject('someGlobalObject.viewer');
+```
+
+Run these scripts in the console one by one. They will help you thoroughly inspect the application's structure and hopefully locate the xeokit viewer or related objects.
+
+Once you find any relevant objects or paths, you can use the `exploreObject` function to dig deeper. If you discover any specific methods or properties, you can then try to interact with them directly in the console.
+
+Remember, modern web applications often use module bundlers and minification, which can make it challenging to find objects directly. If these methods don't work, you might need to consult the application's developers or documentation for specific ways to access the xeokit viewer in your particular implementation.
