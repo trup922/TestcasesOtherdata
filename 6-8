@@ -1,0 +1,128 @@
+Thank you for that information. It's helpful to know that these global objects are available. Since we see these standard window objects, but not a direct reference to the canvas or scene, we'll need to dig a bit deeper. Let's try a few approaches to locate and interact with the canvas and the 3D model:
+
+1. First, let's try to find the canvas element:
+
+```python
+canvas = driver.execute_script("""
+    return document.querySelector('canvas');
+""")
+
+if canvas:
+    print("Canvas found")
+else:
+    print("Canvas not found")
+```
+
+2. If that works, we can try to access some properties or methods:
+
+```python
+resolution_scale = driver.execute_script("""
+    var canvas = document.querySelector('canvas');
+    if (canvas && canvas.resolutionScale) {
+        return canvas.resolutionScale;
+    }
+    return null;
+""")
+
+print(f"Resolution scale: {resolution_scale}")
+```
+
+3. Let's try to find the scene object, which might be attached to the canvas or exist separately:
+
+```python
+scene = driver.execute_script("""
+    if (window.scene) return 'global';
+    var canvas = document.querySelector('canvas');
+    if (canvas && canvas.scene) return 'canvas';
+    for (var key in window) {
+        if (window[key] && typeof window[key] === 'object' && window[key].canvas) {
+            return key;
+        }
+    }
+    return null;
+""")
+
+print(f"Scene found in: {scene}")
+```
+
+4. If we find the scene, we can try to interact with it:
+
+```python
+result = driver.execute_script("""
+    var sceneObject;
+    if (window.scene) {
+        sceneObject = window.scene;
+    } else {
+        var canvas = document.querySelector('canvas');
+        if (canvas && canvas.scene) {
+            sceneObject = canvas.scene;
+        } else {
+            for (var key in window) {
+                if (window[key] && typeof window[key] === 'object' && window[key].canvas) {
+                    sceneObject = window[key];
+                    break;
+                }
+            }
+        }
+    }
+    
+    if (sceneObject) {
+        return {
+            canvasWidth: sceneObject.canvas.width,
+            canvasHeight: sceneObject.canvas.height,
+            numObjects: sceneObject.objects ? Object.keys(sceneObject.objects).length : 'unknown'
+        };
+    }
+    return null;
+""")
+
+if result:
+    print(f"Canvas dimensions: {result['canvasWidth']}x{result['canvasHeight']}")
+    print(f"Number of objects in scene: {result['numObjects']}")
+else:
+    print("Could not access scene properties")
+```
+
+5. To interact with the 3D model, we might need to find specific methods. Let's try to list available methods:
+
+```python
+methods = driver.execute_script("""
+    var sceneObject;
+    // ... (use the same logic as above to find sceneObject)
+    
+    if (sceneObject) {
+        return Object.getOwnPropertyNames(Object.getPrototypeOf(sceneObject))
+            .filter(method => typeof sceneObject[method] === 'function');
+    }
+    return [];
+""")
+
+print("Available methods:", methods)
+```
+
+6. If you find useful methods, you can try to call them:
+
+```python
+driver.execute_script("""
+    var sceneObject;
+    // ... (use the same logic as above to find sceneObject)
+    
+    if (sceneObject && sceneObject.someMethod) {
+        sceneObject.someMethod();
+    }
+""")
+```
+
+These scripts attempt to locate and interact with the canvas and scene objects in various ways. They're designed to be flexible and work even if the objects aren't directly attached to the window object.
+
+Remember to wrap these in try-except blocks to handle any JavaScript errors that might occur:
+
+```python
+try:
+    result = driver.execute_script("...")
+    # process result
+except Exception as e:
+    print(f"An error occurred: {e}")
+```
+
+If these approaches don't work, it might be necessary to inspect the application's source code or consult with the developers to understand the exact structure and how to interact with the 3D model programmatically.
