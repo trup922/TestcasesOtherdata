@@ -456,3 +456,113 @@ if (viewerObject && viewerObject.camera) {
 ```
 
 Remember, the exact structure and method names might be different in your specific implementation. These scripts are designed to help you explore and find the correct objects and methods to interact with.
+
+
+
+Thank you for sharing the image. It looks like you have a script that loads JavaScript files with a cache buster parameter. This is useful for ensuring that the browser fetches the latest version of the script.
+
+Given this context, we can inject our custom script after the page has loaded and the `xeokit` viewer is initialized. Here's how you can do it:
+
+### Step 1: Modify the Existing JavaScript to Expose the Viewer
+
+If you can modify the existing JavaScript file (e.g., `config.js`), add the following code at the end of that file to expose the viewer and necessary functions:
+
+```javascript
+// Assuming the viewer is initialized like this
+const viewer = new xeokit.Viewer({
+    id: "myViewer",
+    canvasId: "myCanvas"
+});
+
+// Expose the viewer globally
+window.myViewer = viewer;
+
+// Additional functions to interact with the viewer
+window.flyToPosition = function(eye, look, up, duration) {
+    viewer.cameraControl.flyTo({
+        eye: eye,
+        look: look,
+        up: up,
+        duration: duration
+    });
+};
+
+window.zoomToEntity = function(entityId) {
+    const entity = viewer.scene.entities[entityId];
+    viewer.cameraControl.zoomEntity(entity);
+};
+
+window.rotateModel = function(axis, angle) {
+    viewer.cameraControl.rotate(axis[0], angle, axis[1]);
+};
+```
+
+### Step 2: Inject JavaScript at Runtime with Selenium
+
+Use Selenium to inject and call the exposed functions.
+
+#### Example Selenium Java Code:
+
+```java
+import org.openqa.selenium.JavascriptExecutor;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.chrome.ChromeDriver;
+
+public class XeokitAutomation {
+    public static void main(String[] args) {
+        // Set up the WebDriver (ChromeDriver in this case)
+        System.setProperty("webdriver.chrome.driver", "path/to/chromedriver");
+        WebDriver driver = new ChromeDriver();
+
+        // Load the page with the 3D model
+        driver.get("URL_OF_YOUR_PAGE");
+
+        // Wait for the page to load completely
+        try {
+            Thread.sleep(5000); // Adjust the sleep time as needed
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        // Inject JavaScript to expose xeokit viewer and functions
+        JavascriptExecutor js = (JavascriptExecutor) driver;
+        String script = "window.flyToPosition = function(eye, look, up, duration) {" +
+                        "    var viewer = window.myViewer;" +
+                        "    viewer.cameraControl.flyTo({eye: eye, look: look, up: up, duration: duration});" +
+                        "};" +
+                        "window.zoomToEntity = function(entityId) {" +
+                        "    var viewer = window.myViewer;" +
+                        "    const entity = viewer.scene.entities[entityId];" +
+                        "    viewer.cameraControl.zoomEntity(entity);" +
+                        "};" +
+                        "window.rotateModel = function(axis, angle) {" +
+                        "    var viewer = window.myViewer;" +
+                        "    viewer.cameraControl.rotate(axis[0], angle, axis[1]);" +
+                        "};";
+        js.executeScript(script);
+
+        // Interact with the 3D model using the injected functions
+        String flyToScript = "window.flyToPosition([10, 10, 10], [0, 0, 0], [0, 1, 0], 1);";
+        js.executeScript(flyToScript);
+
+        String zoomToScript = "window.zoomToEntity('ENTITY_ID');";
+        js.executeScript(zoomToScript);
+
+        String rotateScript = "window.rotateModel([0, 1], 45);"; // Rotate 45 degrees around Y-axis
+        js.executeScript(rotateScript);
+
+        // Close the browser
+        driver.quit();
+    }
+}
+```
+
+### Explanation
+
+1. **Modify the Application Code**: Add code to `config.js` or any other relevant JavaScript file to expose the `xeokit` viewer and functions globally.
+2. **Wait for the Page to Load**: Use `Thread.sleep` to wait for the page to load completely.
+3. **Inject JavaScript Functions**: Use the `executeScript` method to inject JavaScript functions that interact with the xeokit viewer.
+4. **Execute Actions**: Call the injected functions to interact with the 3D model.
+5. **Close the Browser**: After performing the interactions, close the browser.
+
+This approach ensures that you can interact with the `xeokit` viewer even if it is not directly accessible in the global scope initially.
