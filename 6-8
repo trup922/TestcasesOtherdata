@@ -566,3 +566,124 @@ public class XeokitAutomation {
 5. **Close the Browser**: After performing the interactions, close the browser.
 
 This approach ensures that you can interact with the `xeokit` viewer even if it is not directly accessible in the global scope initially.
+
+
+
+Thank you for providing that information. It's very helpful to know that they're using the xeokit library, specifically the CameraControl module. Since xeokit is not globally exposed, we'll need to find a way to access it through the application's structure. Here's what we can try:
+
+1. Search for the viewer instance:
+   The xeokit viewer is typically instantiated and might be stored in a variable. Let's try to find it:
+
+```javascript
+function findXeokitViewer() {
+    return Object.values(window).find(obj => 
+        obj && typeof obj === 'object' && 
+        obj.scene && obj.scene.camera && 
+        obj.scene.canvas && 
+        typeof obj.scene.canvas.getContext === 'function'
+    );
+}
+
+var viewer = findXeokitViewer();
+console.log('Xeokit Viewer:', viewer);
+```
+
+2. If you find the viewer, explore its properties:
+
+```javascript
+if (viewer) {
+    console.log('Viewer properties:', Object.keys(viewer));
+    console.log('Scene properties:', Object.keys(viewer.scene));
+    console.log('Camera properties:', Object.keys(viewer.scene.camera));
+    console.log('CameraControl properties:', Object.keys(viewer.cameraControl));
+}
+```
+
+3. Try to access and manipulate the camera:
+
+```javascript
+if (viewer && viewer.scene && viewer.scene.camera) {
+    var camera = viewer.scene.camera;
+    console.log('Camera eye:', camera.eye);
+    console.log('Camera look:', camera.look);
+    console.log('Camera up:', camera.up);
+    
+    // Try to move the camera
+    camera.eye = [10, 10, 10];
+    camera.look = [0, 0, 0];
+    camera.up = [0, 1, 0];
+    
+    // Force update if needed
+    if (typeof camera.update === 'function') {
+        camera.update();
+    }
+}
+```
+
+4. Try to use CameraControl methods:
+
+```javascript
+if (viewer && viewer.cameraControl) {
+    var cameraControl = viewer.cameraControl;
+    
+    // Try some CameraControl methods
+    if (typeof cameraControl.pivotToAabb === 'function') {
+        cameraControl.pivotToAabb(viewer.scene.aabb);
+    }
+    
+    if (typeof cameraControl.fitToView === 'function') {
+        cameraControl.fitToView();
+    }
+}
+```
+
+5. Look for specific xeokit plugins:
+
+```javascript
+function findXeokitPlugins() {
+    if (viewer && viewer.plugins) {
+        return Object.keys(viewer.plugins);
+    }
+    return [];
+}
+
+var plugins = findXeokitPlugins();
+console.log('Xeokit Plugins:', plugins);
+```
+
+6. If you find plugins, try to use them:
+
+```javascript
+if (viewer && viewer.plugins) {
+    // Example with a hypothetical "BCFViewpointsPlugin"
+    var bcfPlugin = viewer.plugins.BCFViewpointsPlugin;
+    if (bcfPlugin && typeof bcfPlugin.setViewpoint === 'function') {
+        bcfPlugin.setViewpoint(/* viewpoint data */);
+    }
+    
+    // Example with a hypothetical "TreeViewPlugin"
+    var treeViewPlugin = viewer.plugins.TreeViewPlugin;
+    if (treeViewPlugin && typeof treeViewPlugin.showNode === 'function') {
+        treeViewPlugin.showNode('some-node-id');
+    }
+}
+```
+
+7. Try to access the canvas directly:
+
+```javascript
+if (viewer && viewer.scene && viewer.scene.canvas) {
+    var canvas = viewer.scene.canvas;
+    console.log('Canvas dimensions:', canvas.width, 'x', canvas.height);
+    
+    // You might be able to get the WebGL context
+    var gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+    if (gl) {
+        console.log('WebGL context acquired');
+    }
+}
+```
+
+These scripts should help you explore and interact with the xeokit viewer, even if it's not globally exposed. Run them in the console and see what information you can gather. Once you find the correct paths to access the viewer and its components, you can use this information to construct your Selenium commands using `driver.execute_script()`.
+
+Remember, the exact structure might vary depending on how the application has implemented and configured xeokit. You may need to adjust these scripts based on what you find in your specific implementation.
