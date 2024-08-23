@@ -115,6 +115,46 @@ public class ViewerPage extends BasePage {
         return input.toLowerCase().replaceAll("[^a-z0-9]", "");
     }
 
+public String getTooltipText(String elementName) {
+        WebElement element = findElement(elementName);
+        if (element == null) {
+            throw new IllegalArgumentException("Unknown element: " + elementName);
+        }
+        hover(element);
+        return element.getAttribute("title");  // Assuming tooltips are in the 'title' attribute
+    }
+
+    // New method to verify tooltip
+    public boolean verifyTooltip(String elementName, String expectedTooltip) {
+        String actualTooltip = getTooltipText(elementName);
+        boolean isMatch = actualTooltip.trim().equalsIgnoreCase(expectedTooltip.trim());
+        if (isMatch) {
+            logger.info("Tooltip for '{}' matches expected value: {}", elementName, expectedTooltip);
+        } else {
+            logger.warn("Tooltip mismatch for '{}'. Expected: '{}', Actual: '{}'", elementName, expectedTooltip, actualTooltip);
+        }
+        return isMatch;
+    }
+
+    // Method to verify tooltip using a more flexible approach
+    public boolean verifyTooltipContains(String elementName, String expectedPartialTooltip) {
+        String actualTooltip = getTooltipText(elementName);
+        boolean contains = actualTooltip.toLowerCase().contains(expectedPartialTooltip.toLowerCase());
+        if (contains) {
+            logger.info("Tooltip for '{}' contains expected value: {}", elementName, expectedPartialTooltip);
+        } else {
+            logger.warn("Tooltip for '{}' does not contain expected value. Expected to contain: '{}', Actual: '{}'", 
+                        elementName, expectedPartialTooltip, actualTooltip);
+        }
+        return contains;
+    }
+
+    // Helper method to wait for tooltip to appear
+    private void waitForTooltip(WebElement element) {
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+        wait.until(ExpectedConditions.attributeToBeNotEmpty(element, "title"));
+    }
+
     // Existing methods from BasePage (unchanged)
     @Override
     public void load(String endpoint) {
@@ -221,5 +261,25 @@ public class ViewerStepDefinitions {
             "Expected tooltip: " + expectedTooltip + ", but got: " + actualTooltip;
     }
 
-    // Add other step definitions as needed...
+    public class ViewerStepDefinitions {
+    private ViewerPage viewerPage;
+
+    public ViewerStepDefinitions(ViewerPage viewerPage) {
+        this.viewerPage = viewerPage;
+    }
+
+    @Then("the tooltip for the {string} button should be {string}")
+    public void theTooltipForTheButtonShouldBe(String elementName, String expectedTooltip) {
+        assert viewerPage.verifyTooltip(elementName, expectedTooltip) : 
+            "Tooltip for '" + elementName + "' does not match expected value";
+    }
+
+    @Then("the tooltip for the {string} button should contain {string}")
+    public void theTooltipForTheButtonShouldContain(String elementName, String partialTooltip) {
+        assert viewerPage.verifyTooltipContains(elementName, partialTooltip) : 
+            "Tooltip for '" + elementName + "' does not contain expected value";
+    }
+
+    // ... other step definitions ...
+}
 }
