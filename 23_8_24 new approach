@@ -1,0 +1,225 @@
+package com.tp.pages;
+
+import java.time.Duration;
+import org.openqa.selenium.JavascriptExecutor;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.interactions.Actions;
+import org.openqa.selenium.support.FindBy;
+import org.openqa.selenium.support.PageFactory;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import com.tp.utilities.ConfigLoader;
+
+import java.util.*;
+
+public class ViewerPage extends BasePage {
+    private static final Logger logger = LoggerFactory.getLogger(ViewerPage.class);
+    private Map<String, WebElement> elementMap = new HashMap<>();
+    private Map<String, String> aliasMap = new HashMap<>();
+
+    // WebElement declarations
+    @FindBy(id = "home-button")
+    private WebElement homeButton;
+
+    @FindBy(id = "tree-button")
+    private WebElement treeButton;
+
+    @FindBy(id = "expand-horizontal-button")
+    private WebElement expandHorizontalButton;
+
+    @FindBy(id = "default-view-button")
+    private WebElement defaultViewButton;
+
+    @FindBy(id = "first-person-mode-button")
+    private WebElement firstPersonModeButton;
+
+    @FindBy(id = "camera-mode-button")
+    private WebElement cameraModeButton;
+
+    @FindBy(id = "orthographic-button")
+    private WebElement orthographicButton;
+
+    @FindBy(id = "perspective-button")
+    private WebElement perspectiveButton;
+
+    @FindBy(id = "pan-mode-button")
+    private WebElement panModeButton;
+
+    @FindBy(id = "orbit-mode-button")
+    private WebElement orbitModeButton;
+
+    @FindBy(id = "zoom-in-button")
+    private WebElement zoomInButton;
+
+    @FindBy(id = "zoom-out-button")
+    private WebElement zoomOutButton;
+
+    @FindBy(id = "fit-to-screen-button")
+    private WebElement fitToScreenButton;
+
+    @FindBy(id = "drag-zoom-button")
+    private WebElement dragZoomButton;
+
+    public ViewerPage(WebDriver driver) {
+        super(driver);
+        initializeElementsAndAliases();
+    }
+
+    private void initializeElementsAndAliases() {
+        defineElement("home", homeButton, "home", "Home", "Home button");
+        defineElement("tree", treeButton, "tree", "Tree", "Tree button");
+        defineElement("expandHorizontal", expandHorizontalButton, "expand horizontal", "Expand Horizontal", "Expand Horizontal button");
+        defineElement("defaultView", defaultViewButton, "default view", "Default View", "Default view button");
+        defineElement("firstPersonMode", firstPersonModeButton, "first person mode", "First Person Mode", "First person mode button");
+        defineElement("cameraMode", cameraModeButton, "camera mode", "Camera Mode", "Camera mode button");
+        defineElement("orthographic", orthographicButton, "orthographic", "Orthographic", "Orthographic button");
+        defineElement("perspective", perspectiveButton, "perspective", "Perspective", "Perspective button");
+        defineElement("panMode", panModeButton, "pan mode", "Pan Mode", "Pan mode button");
+        defineElement("orbitMode", orbitModeButton, "orbit mode", "Orbit Mode", "Orbit mode button");
+        defineElement("zoomIn", zoomInButton, "zoom in", "Zoom In", "Zoom in button");
+        defineElement("zoomOut", zoomOutButton, "zoom out", "Zoom Out", "Zoom out button");
+        defineElement("fitToScreen", fitToScreenButton, "fit to screen", "Fit to Screen", "Fit to screen button");
+        defineElement("dragZoom", dragZoomButton, "drag zoom", "Drag Zoom", "Drag zoom button");
+    }
+
+    private void defineElement(String key, WebElement element, String... aliases) {
+        elementMap.put(key, element);
+        for (String alias : aliases) {
+            aliasMap.put(normalizeString(alias), key);
+        }
+    }
+
+    public void clickElement(String elementName) {
+        WebElement element = findElement(elementName);
+        if (element == null) {
+            throw new IllegalArgumentException("Unknown element: " + elementName);
+        }
+        click(element);
+        logger.info("Clicked on element: {}", elementName);
+    }
+
+    private WebElement findElement(String elementName) {
+        String normalizedName = normalizeElementName(elementName);
+        return elementMap.get(normalizedName);
+    }
+
+    private String normalizeElementName(String elementName) {
+        String normalized = normalizeString(elementName);
+        return aliasMap.getOrDefault(normalized, normalized);
+    }
+
+    private String normalizeString(String input) {
+        return input.toLowerCase().replaceAll("[^a-z0-9]", "");
+    }
+
+    // Existing methods from BasePage (unchanged)
+    @Override
+    public void load(String endpoint) {
+        super.load(endpoint);
+    }
+
+    @Override
+    public void click(WebElement element) {
+        super.click(element);
+    }
+
+    @Override
+    public void waitForElementToBeVisible(WebElement element) {
+        super.waitForElementToBeVisible(element);
+    }
+
+    @Override
+    public void waitForElementToBeClickable(WebElement element) {
+        super.waitForElementToBeClickable(element);
+    }
+
+    @Override
+    public void javascriptClick(WebElement element) {
+        super.javascriptClick(element);
+    }
+
+    @Override
+    public void hover(WebElement element) {
+        super.hover(element);
+    }
+
+    @Override
+    public String getTooltipText(WebElement element) {
+        return super.getTooltipText(element);
+    }
+
+    @Override
+    public void sendKeys(WebElement element, String text) {
+        super.sendKeys(element, text);
+    }
+
+    @Override
+    public String getText(WebElement element) {
+        return super.getText(element);
+    }
+
+    @Override
+    public boolean isElementDisplayed(WebElement element) {
+        return super.isElementDisplayed(element);
+    }
+
+    @Override
+    public void sleep(int seconds) {
+        super.sleep(seconds);
+    }
+
+    // ViewerPage specific methods (modified to use string-based approach)
+    public boolean isHomeButtonDisplayed() {
+        return isElementDisplayed(findElement("home"));
+    }
+
+    public String getTooltipText(String elementName) {
+        WebElement element = findElement(elementName);
+        if (element == null) {
+            throw new IllegalArgumentException("Unknown element: " + elementName);
+        }
+        return super.getTooltipText(element);
+    }
+
+    // Add any other ViewerPage specific methods here...
+}
+
+
+
+
+package com.tp.stepdefinitions;
+
+import com.tp.pages.ViewerPage;
+import io.cucumber.java.en.Given;
+import io.cucumber.java.en.When;
+import io.cucumber.java.en.Then;
+
+public class ViewerStepDefinitions {
+    private ViewerPage viewerPage;
+
+    public ViewerStepDefinitions(ViewerPage viewerPage) {
+        this.viewerPage = viewerPage;
+    }
+
+    @When("I click on the {string} button on the viewer page")
+    public void iClickOnTheButtonOnTheViewerPage(String elementName) {
+        viewerPage.clickElement(elementName);
+    }
+
+    @Then("The {string} button should be displayed")
+    public void theButtonShouldBeDisplayed(String elementName) {
+        assert viewerPage.isElementDisplayed(viewerPage.findElement(elementName));
+    }
+
+    @Then("The tooltip for the {string} button should say {string}")
+    public void theTooltipForTheButtonShouldSay(String elementName, String expectedTooltip) {
+        String actualTooltip = viewerPage.getTooltipText(elementName);
+        assert actualTooltip.equals(expectedTooltip) : 
+            "Expected tooltip: " + expectedTooltip + ", but got: " + actualTooltip;
+    }
+
+    // Add other step definitions as needed...
+}
