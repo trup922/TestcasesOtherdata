@@ -1,0 +1,178 @@
+package com.tp.pages;
+
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.PageFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.HashMap;
+import java.util.Map;
+
+public abstract class BasePage {
+    protected static final Logger logger = LoggerFactory.getLogger(BasePage.class);
+    protected WebDriver driver;
+    protected Map<String, WebElement> elementMap = new HashMap<>();
+    protected Map<String, String> aliasMap = new HashMap<>();
+
+    public BasePage(WebDriver driver) {
+        this.driver = driver;
+        PageFactory.initElements(driver, this);
+        initializeElementsAndAliases();
+    }
+
+    protected abstract void initializeElementsAndAliases();
+
+    protected void defineElement(String key, WebElement element, String... aliases) {
+        elementMap.put(key, element);
+        for (String alias : aliases) {
+            aliasMap.put(normalizeString(alias), key);
+        }
+    }
+
+    public void clickElement(String elementName) {
+        WebElement element = findElement(elementName);
+        if (element == null) {
+            throw new IllegalArgumentException("Unknown element: " + elementName);
+        }
+        element.click();
+        logger.info("Clicked on element: {}", elementName);
+    }
+
+    protected WebElement findElement(String elementName) {
+        String normalizedName = normalizeElementName(elementName);
+        return elementMap.get(normalizedName);
+    }
+
+    private String normalizeElementName(String elementName) {
+        String normalized = normalizeString(elementName);
+        return aliasMap.getOrDefault(normalized, normalized);
+    }
+
+    private String normalizeString(String input) {
+        return input.toLowerCase().replaceAll("[^a-z0-9]", "");
+    }
+
+    // Add other common methods like sendKeys, isDisplayed, etc.
+}
+
+
+---------------------------------------------
+
+package com.tp.pages;
+
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.FindBy;
+
+public class NewPage extends BasePage {
+    @FindBy(id = "new-button")
+    private WebElement newButton;
+
+    @FindBy(id = "new-input")
+    private WebElement newInput;
+
+    public NewPage(WebDriver driver) {
+        super(driver);
+    }
+
+    @Override
+    protected void initializeElementsAndAliases() {
+        defineElement("newButton", newButton, "new button", "New Button");
+        defineElement("newInput", newInput, "new input", "New Input");
+    }
+
+    // Add page-specific methods here
+}
+__________________________________________________
+
+package com.tp.pages;
+
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.FindBy;
+
+public class ViewerPage extends BasePage {
+    @FindBy(id = "tree-button")
+    private WebElement treeButton;
+
+    @FindBy(id = "expand-horizontal-button")
+    private WebElement expandHorizontalButton;
+
+    // ... other @FindBy annotations ...
+
+    public ViewerPage(WebDriver driver) {
+        super(driver);
+    }
+
+    @Override
+    protected void initializeElementsAndAliases() {
+        defineElement("tree", treeButton, "tree", "Tree", "Tree button");
+        defineElement("expandHorizontal", expandHorizontalButton, "expand horizontal", "Expand Horizontal", "Expand Horizontal button");
+        // ... define other elements ...
+    }
+
+    // Add viewer-specific methods here
+}
+
+_____________________________________________________________
+
+package com.tp.pages;
+
+import org.openqa.selenium.WebDriver;
+
+public class PageFactory {
+    private WebDriver driver;
+
+    public PageFactory(WebDriver driver) {
+        this.driver = driver;
+    }
+
+    public ViewerPage getViewerPage() {
+        return new ViewerPage(driver);
+    }
+
+    public NewPage getNewPage() {
+        return new NewPage(driver);
+    }
+
+    // Add methods for other pages as needed
+}
+___________________________________________________________________________
+
+package com.tp.stepdefinitions;
+
+import com.tp.pages.PageFactory;
+import com.tp.pages.ViewerPage;
+import com.tp.pages.NewPage;
+import io.cucumber.java.en.Given;
+import io.cucumber.java.en.When;
+import io.cucumber.java.en.Then;
+
+public class CommonStepDefinitions {
+    private PageFactory pageFactory;
+    private ViewerPage viewerPage;
+    private NewPage newPage;
+
+    public CommonStepDefinitions(PageFactory pageFactory) {
+        this.pageFactory = pageFactory;
+        this.viewerPage = pageFactory.getViewerPage();
+        this.newPage = pageFactory.getNewPage();
+    }
+
+    @When("I click on the {string} button on the {string} page")
+    public void iClickOnTheButtonOnThePage(String elementName, String pageName) {
+        switch (pageName.toLowerCase()) {
+            case "viewer":
+                viewerPage.clickElement(elementName);
+                break;
+            case "new":
+                newPage.clickElement(elementName);
+                break;
+            default:
+                throw new IllegalArgumentException("Unknown page: " + pageName);
+        }
+    }
+
+    // Add other common step definitions
+}
