@@ -1,0 +1,59 @@
+import org.opencv.core.Core;
+import org.opencv.core.Mat;
+import org.opencv.core.MatOfKeyPoint;
+import org.opencv.core.Scalar;
+import org.opencv.features2d.Features2d;
+import org.opencv.features2d.ORB;
+import org.opencv.imgcodecs.Imgcodecs;
+import org.opencv.core.MatOfDMatch;
+import org.opencv.features2d.BFMatcher;
+import org.opencv.features2d.DescriptorMatcher;
+
+public class ImageComparator {
+    static {
+        System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
+    }
+
+    public static void main(String[] args) {
+        // Load images
+        Mat image1 = Imgcodecs.imread("path/to/image1.png", Imgcodecs.IMREAD_GRAYSCALE);
+        Mat image2 = Imgcodecs.imread("path/to/image2.png", Imgcodecs.IMREAD_GRAYSCALE);
+
+        // Detect ORB features
+        ORB orb = ORB.create();
+        MatOfKeyPoint keypoints1 = new MatOfKeyPoint();
+        MatOfKeyPoint keypoints2 = new MatOfKeyPoint();
+        Mat descriptors1 = new Mat();
+        Mat descriptors2 = new Mat();
+        orb.detectAndCompute(image1, new Mat(), keypoints1, descriptors1);
+        orb.detectAndCompute(image2, new Mat(), keypoints2, descriptors2);
+
+        // Match features
+        BFMatcher matcher = BFMatcher.create(DescriptorMatcher.BRUTEFORCE_HAMMING, true);
+        MatOfDMatch matches = new MatOfDMatch();
+        matcher.match(descriptors1, descriptors2, matches);
+
+        // Calculate similarity score
+        double similarity = calculateSimilarity(matches);
+        System.out.println("Similarity: " + similarity);
+
+        // Set a threshold for similarity
+        if (similarity > 0.8) {
+            System.out.println("Images are similar.");
+        } else {
+            System.out.println("Images are different.");
+        }
+    }
+
+    private static double calculateSimilarity(MatOfDMatch matches) {
+        // Calculate the average distance between matched features
+        double totalDistance = 0;
+        for (int i = 0; i < matches.rows(); i++) {
+            totalDistance += matches.toList().get(i).distance;
+        }
+        double averageDistance = totalDistance / matches.rows();
+
+        // Normalize the similarity score (lower distance = higher similarity)
+        return 1.0 / (1.0 + averageDistance);
+    }
+}
